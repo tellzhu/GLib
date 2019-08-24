@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "General Lib", "General Lib\General Lib.vbproj", "{8A2F4941-A578-4F94-905D-73178110C484}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A2F4941-A578-4F94-905D-73178110C484}.Debug|x86.ActiveCfg = Debug|x86
+		{8A2F4941-A578-4F94-905D-73178110C484}.Debug|x86.Build.0 = Debug|x86
+		{8A2F4941-A578-4F94-905D-73178110C484}.Release|x86.ActiveCfg = Release|x86
+		{8A2F4941-A578-4F94-905D-73178110C484}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 1
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://180.1.200.229:8080/tfs/rc
+		SccProjectUniqueName0 = General\u0020Lib\\General\u0020Lib.vbproj
+		SccProjectName0 = $/MRM2/MRM2/General\u0020Lib
+		SccAuxPath0 = http://180.1.200.229:8080/tfs/rc
+		SccLocalPath0 = General\u0020Lib
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+	EndGlobalSection
+EndGlobal
