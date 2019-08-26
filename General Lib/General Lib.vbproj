@@ -159,11 +159,7 @@
     <Compile Include="src\math\NormalDistribution.vb" />
     <Compile Include="src\math\Triangle.vb" />
     <Compile Include="src\db\BridgeProtocol.vb" />
-    <Compile Include="src\net\DemoProtocol.vb" />
     <Compile Include="src\net\NetMaster.vb" />
-    <Compile Include="src\net\ReliableClient.vb" />
-    <Compile Include="src\net\ReliableProtocol.vb" />
-    <Compile Include="src\net\ReliableServer.vb" />
     <Compile Include="src\net\Transporter.vb" />
     <Compile Include="src\net\WebRobot.vb" />
     <Compile Include="src\office\Chartist.vb" />

@@ -3,3 +3,6 @@
 ################################################################################
 
 /General Lib/bin/x86/Debug
+/General Lib/obj/x86
+/.vs/GeneralLib/v16/Server/sqlite3
+/.vs
