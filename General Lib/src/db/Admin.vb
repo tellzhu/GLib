@@ -487,8 +487,7 @@ Namespace db
                     Return Nothing
             End Select
         End Function
-
-        Friend Shared Function GetDataTable(Command As String) As Data.DataTable
+        Public Shared Function GetDataTable(Command As String) As Data.DataTable
             Dim tId As Integer = CurrentThread.ManagedThreadId
             InitDBConnection()
             Dim con As GeneralConnection = m_ConnectionSet.Item(tId)

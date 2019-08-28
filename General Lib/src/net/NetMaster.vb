@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports WinSCP
+Imports System.IO
 Imports System.Net
 Imports System.Net.Mail
 
@@ -29,6 +30,41 @@ Namespace net
         End Function
 
         ''' <summary>
+        ''' 从SFTP服务器下载文件。
+        ''' </summary>
+        ''' <param name="SFTPServer">SFTP服务器名称。</param>
+        ''' <param name="UserName">服务器用户名称。</param>
+        ''' <param name="Password">服务器登录密码。</param>
+        ''' <param name="KeyFingerprint">服务器密钥指纹</param> 
+        ''' <param name="RemoteFiles">服务器上待下载的文件列表所在路径。</param>
+        ''' <param name="LocalPath">下载文件后的本地路径。</param>
+        Public Shared Sub DownloadSFTPFiles(SFTPServer As String, UserName As String, Password As String, KeyFingerprint As String,
+                                        RemoteFiles As String(), LocalPath As String)
+            Dim sessionOptions As SessionOptions = New SessionOptions()
+            With sessionOptions
+                .Protocol = Protocol.Sftp
+                .HostName = SFTPServer
+                .UserName = UserName
+                .Password = Password
+                .SshHostKeyFingerprint = KeyFingerprint
+            End With
+
+            Using session As New Session
+                session.Open(sessionOptions)
+                Dim transferOptions As New TransferOptions
+                transferOptions.TransferMode = TransferMode.Binary
+
+                Dim transferResult As TransferOperationResult
+                For i As Integer = 0 To RemoteFiles.Length - 1
+                    transferResult = session.GetFiles(RemoteFiles(i), LocalPath, False, transferOptions)
+                    transferResult.Check()
+                Next
+                session.Close()
+            End Using
+            sessionOptions = Nothing
+        End Sub
+
+        ''' <summary>
         ''' 从FTP服务器下载文件。
         ''' </summary>
         ''' <param name="FtpServer">FTP服务器名称。</param>
@@ -48,34 +84,47 @@ Namespace net
                 FtpServer = FtpServer.Substring(0, FtpServer.Length - 1)
             End If
             Dim remoteFile As String = "ftp://" + FtpServer + "/" + RemotePath
-            Dim request As FtpWebRequest = CType(WebRequest.Create(New Uri(remoteFile)), FtpWebRequest)
-            request.Method = WebRequestMethods.Ftp.DownloadFile
-            request.UseBinary = True
-            request.KeepAlive = False
-            request.Credentials = New NetworkCredential(UserName, Password)
-            Dim response As FtpWebResponse = CType(request.GetResponse, FtpWebResponse)
-            Dim responseStream As Stream = response.GetResponseStream
-            Dim outputStream As FileStream = New FileStream(LocalPath, FileMode.Create)
+            Dim response As FtpWebResponse = Nothing
+            Dim responseStream As Stream = Nothing
+            Dim outputStream As FileStream = Nothing
             Dim bufferSize As Integer = 65536
             Dim buffer(bufferSize - 1) As Byte
-            Dim readCount As Integer = responseStream.Read(buffer, 0, bufferSize)
-            While readCount > 0
-                outputStream.Write(buffer, 0, readCount)
-                readCount = responseStream.Read(buffer, 0, bufferSize)
-            End While
-            outputStream.Flush()
-            outputStream.Close()
-            outputStream = Nothing
-            bufferSize = Nothing
-            Array.Clear(buffer, 0, buffer.Length)
-            buffer = Nothing
-            readCount = Nothing
-            responseStream.Close()
-            responseStream = Nothing
-            response.Close()
-            response = Nothing
-            request = Nothing
-            remoteFile = Nothing
+            Try
+                Dim request As FtpWebRequest = CType(WebRequest.Create(New Uri(remoteFile)), FtpWebRequest)
+                request.Method = WebRequestMethods.Ftp.DownloadFile
+                request.UseBinary = True
+                request.KeepAlive = False
+                request.Timeout = Threading.Timeout.Infinite
+                request.Credentials = New NetworkCredential(UserName, Password)
+                response = CType(request.GetResponse, FtpWebResponse)
+                responseStream = response.GetResponseStream
+                outputStream = New FileStream(LocalPath, FileMode.Create)
+                Dim readCount As Integer = responseStream.Read(buffer, 0, bufferSize)
+                While readCount > 0
+                    outputStream.Write(buffer, 0, readCount)
+                    readCount = responseStream.Read(buffer, 0, bufferSize)
+                End While
+            Catch ex As Exception
+                outputStream.Flush()
+                outputStream.Close()
+                Array.Clear(buffer, 0, buffer.Length)
+                responseStream.Close()
+                response.Close()
+                Throw ex
+            End Try
+            If outputStream IsNot Nothing Then
+                outputStream.Flush()
+                outputStream.Close()
+            End If
+            If buffer IsNot Nothing Then
+                Array.Clear(buffer, 0, buffer.Length)
+            End If
+            If responseStream IsNot Nothing Then
+                responseStream.Close()
+            End If
+            If response IsNot Nothing Then
+                response.Close()
+            End If
         End Sub
 
         ''' <summary>
@@ -121,6 +170,7 @@ Namespace net
                 request.Method = WebRequestMethods.Ftp.ListDirectory
                 request.UseBinary = True
                 request.KeepAlive = False
+                request.Timeout = Threading.Timeout.Infinite
                 request.Credentials = New NetworkCredential(UserName, Password)
                 Dim response As FtpWebResponse = CType(request.GetResponse, FtpWebResponse)
                 Dim responseStream As Stream = response.GetResponseStream

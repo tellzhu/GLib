@@ -1,8 +1,8 @@
 ﻿Imports System.Data
 
 Namespace db
-    Friend Class DBExpert
-        Friend Shared Function IndexOfColumnName(ByRef dt As DataTable, Name As String) As Integer
+    Public Class DBExpert
+        Public Shared Function IndexOfColumnName(ByRef dt As DataTable, Name As String) As Integer
             Dim cnt As Integer = dt.Columns.Count - 1
             For i As Integer = 0 To cnt
                 If dt.Columns(i).Caption = Name Then

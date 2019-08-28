@@ -274,15 +274,23 @@ Namespace db
                 For i As Integer = 0 To maxColumn
                     Select Case m_DictionaryOfColumnType.Item(i)
                         Case "VARCHAR", "NVARCHAR"
-                            dr(i) = strs(i)
+                            If strs(i).Length = 0 Then
+                                dr(i) = DBNull.Value
+                            Else
+                                dr(i) = strs(i)
+                            End If
                         Case "DATE"
-                            If strs(i).Length = 8 Then
+                            If IsDate(strs(i)) Then
+                                dr(i) = CDate(strs(i))
+                            ElseIf strs(i).Length = 8 Then
                                 dr(i) = DateValue(strs(i))
                             End If
                         Case "DECIMAL"
                             If IsNumeric(strs(i)) Then
                                 dr(i) = CDec(strs(i))
                             End If
+                        Case "INT"
+                            dr(i) = CInt(strs(i))
                         Case Else
                             MsgBox("Error Column Type:" + m_DictionaryOfColumnType.Item(i) + " Value:" + strs(i), MsgBoxStyle.Critical)
                     End Select

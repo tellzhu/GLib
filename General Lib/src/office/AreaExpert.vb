@@ -233,6 +233,23 @@ Namespace office
             setFormula(a, Divide(Address(a.Row, numeratorColumn), Address(a.Row, denominatorColumn)))
         End Sub
 
+        Public Shared Function PrintDataTableToHTML(ByRef dt As Data.DataTable) As String
+            Dim m_HtmlStr As String = Nothing
+            Dim rowCount As Integer = dt.Rows.Count
+            If rowCount > 0 Then
+                Dim columnCount As Integer = dt.Columns.Count
+                For i As Integer = 0 To rowCount - 1
+                    For j As Integer = 0 To columnCount - 1
+                        m_HtmlStr = m_HtmlStr + "<td align=""center"">" + CStr(dt.Rows(i).ItemArray(j)) + "</td>"
+                    Next
+                    m_HtmlStr = m_HtmlStr + "</tr>"
+                Next
+                columnCount = Nothing
+            End If
+            rowCount = Nothing
+            Return m_HtmlStr
+        End Function
+
         ''' <summary>
         ''' 在Excel工作表的指定单元格区域中输出一个数据矩阵中的所有元素。输出到Excel的单元格
         ''' 区域与矩阵的元素是一一对应的，即：输出单元格的区域的行数、列数分别等于矩阵的行数、
@@ -382,6 +399,11 @@ Namespace office
             PrintDataTableToExcel(a, dt)
             Return dt.Rows.Count
         End Function
+        Public Shared Function PrintGroupValue(GroupValue As String) As String
+            Dim lst As List(Of Data.DataTable) = m_GroupNameTable(GroupValue)
+            Dim dt As Data.DataTable = lst(0)
+            Return PrintDataTableToHTML(dt)
+        End Function
 
         ''' <summary>
         ''' 在Excel工作表的指定单元格区域中输出SQL查询语句的结果集数据。输出到Excel的单元格
@@ -394,7 +416,9 @@ Namespace office
         Public Shared Function PrintSQLQuery(ByRef a As Area, SQL As String) As Integer
             Dim dt As Data.DataTable = GetDataTable(SQL)
             Dim rowCount As Integer = dt.Rows.Count
-            PrintDataTableToExcel(a, dt)
+            If a IsNot Nothing Then
+                PrintDataTableToExcel(a, dt)
+            End If
             If m_PrintInGroupName IsNot Nothing Then
                 FillGroupNameTable(dt)
             End If
