@@ -332,7 +332,7 @@ Namespace office
         End Function
 
         Private Shared Sub FillGroupNameTable(ByRef dt As Data.DataTable)
-            Dim index As Integer = IndexOfColumnName(dt, m_PrintInGroupName)
+            Dim index As Integer = dt.Columns.IndexOf(m_PrintInGroupName)
             If index <> -1 Then
                 Dim subDts As Dictionary(Of String, Data.DataTable) = Split(dt, index)
                 Dim lst As List(Of Data.DataTable) = Nothing
