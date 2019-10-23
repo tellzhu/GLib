@@ -37,12 +37,10 @@ Namespace db
                     Next
                 Loop
                 reader.Close()
-                reader = Nothing
                 RecordQueryFieldCount(FieldCount)
                 If array.Count > 0 Then
                     Return array
                 Else
-                    array = Nothing
                     Return Nothing
                 End If
             End Function
@@ -52,7 +50,7 @@ Namespace db
                 Dim reader As DbDataReader = Me.DBMSCommand.ExecuteReader
                 Dim array As List(Of T) = New List(Of T)
                 Dim FieldCount As Integer = reader.FieldCount
-                Dim o As Object = Nothing
+                Dim o As Object
                 Do While reader.Read()
                     For i As Integer = 0 To FieldCount - 1
                         o = reader.GetValue(i)
@@ -64,14 +62,10 @@ Namespace db
                     Next
                 Loop
                 reader.Close()
-                reader = Nothing
                 RecordQueryFieldCount(FieldCount)
-                FieldCount = Nothing
-                o = Nothing
                 If array.Count > 0 Then
                     Return array
                 Else
-                    array = Nothing
                     Return Nothing
                 End If
             End Function
@@ -101,8 +95,8 @@ Namespace db
     Friend Shared Function LoadCommand(ByVal Command As String) As Integer
         CloseRecordsetResource()
         Dim tId As Integer = CurrentThread.ManagedThreadId
-        Dim con As GeneralConnection = Nothing
-        If Not m_ConnectionSet.ContainsKey(tId) Then
+            Dim con As GeneralConnection
+            If Not m_ConnectionSet.ContainsKey(tId) Then
             con = New GeneralConnection
             OpenADODBConnection(con, Command)
             m_ConnectionSet.Add(tId, con)
@@ -113,9 +107,8 @@ Namespace db
             End If
             m_ConnectionSet.Item(tId) = con
         End If
-        tId = Nothing
-        Return con.ADODBRowCount
-    End Function
+            Return con.ADODBRowCount
+        End Function
 
     Private Shared Sub CloseRecordsetResource()
         Dim tId As Integer = CurrentThread.ManagedThreadId

@@ -10,6 +10,43 @@ Namespace db
     Public Class Value
 
         ''' <summary>
+        ''' 获取SQL语句查询结果对应的类型值。
+        ''' </summary>
+        ''' <typeparam name="T">查询结果的数据类型。</typeparam>
+        ''' <param name="Command">SQL语句。</param>
+        ''' <returns>SQL语句查询结果集理论上应只包含一个元素，否则可能产生预期外的结果。</returns>
+        Public Shared Function Val(Of T)(ByVal Command As String) As T
+            Dim obj As Object = Execute(Command).Item(0)
+            If IsDBNull(obj) Then
+                Return Nothing
+            Else
+                Return CType(obj, T)
+            End If
+        End Function
+
+        ''' <summary>
+        '''  获取SQL语句查询结果对应的“键-值”对字典表。
+        ''' </summary>
+        ''' <typeparam name="T">键的数据类型。</typeparam>
+        ''' <typeparam name="V">值的数据类型。</typeparam>
+        ''' <param name="Command">SQL语句。</param>
+        ''' <returns>SQL语句的查询结果集为两列，其中第一列为字典表的键，第二列为字典表的值。</returns>
+        Public Shared Function Pair(Of T, V)(Command As String) As Dictionary(Of T, V)
+            Dim mt As Matrix(Of Object) = New Matrix(Of Object)(Command)
+            Dim cnt As Integer = mt.RowsCount
+            If cnt = 0 Then
+                mt.Clear()
+                Return Nothing
+            End If
+            Dim dict As New Dictionary(Of T, V)
+            For i As Integer = 1 To cnt
+                dict.Add(CType(mt.Cell(i, 1), T), CType(mt.Cell(i, 2), V))
+            Next
+            mt.Clear()
+            Return dict
+        End Function
+
+        ''' <summary>
         ''' 获取SQL语句查询结果对应的字符串值。
         ''' </summary>
         ''' <param name="Command">SQL语句。</param>
@@ -19,7 +56,6 @@ Namespace db
         Public Shared Function Str(ByVal Command As String) As String
             Dim obj As Object = Execute(Command).Item(0)
             If IsDBNull(obj) Then
-                obj = Nothing
                 Return Nothing
             Else
                 Return CStr(obj)
@@ -35,7 +71,6 @@ Namespace db
         Public Shared Function Int(ByVal Command As String) As Integer
             Dim obj As Object = Execute(Command).Item(0)
             If IsDBNull(obj) Then
-                obj = Nothing
                 Return 0
             Else
                 Return CInt(obj)
@@ -51,7 +86,6 @@ Namespace db
         Public Shared Function Dbl(ByVal Command As String) As Double
             Dim obj As Object = Execute(Command).Item(0)
             If IsDBNull(obj) Then
-                obj = Nothing
                 Return 0
             Else
                 Return CDbl(obj)
@@ -68,7 +102,6 @@ Namespace db
         Public Shared Function Dte(ByVal Command As String) As Date
             Dim obj As Object = Execute(Command).Item(0)
             If IsDBNull(obj) Then
-                obj = Nothing
                 Return Nothing
             Else
                 Return CDate(obj)
@@ -92,8 +125,6 @@ Namespace db
                 Next
                 mt.Clear()
             End If
-            mt = Nothing
-            cnt = Nothing
             Return dict
         End Function
 
@@ -107,7 +138,6 @@ Namespace db
         Public Shared Function Dec(ByVal Command As String) As Decimal
             Dim obj As Object = Execute(Command).Item(0)
             If IsDBNull(obj) Then
-                obj = Nothing
                 Return 0
             Else
                 Return CDec(obj)
@@ -173,19 +203,16 @@ Namespace db
                 For j As Integer = 1 To column - 1
                     s = s + mt.Cell(i, j) + SeparateChar
                 Next
-                s = s + mt.Cell(i, column)
+                s += mt.Cell(i, column)
                 If i <> row Then
                     If IsCrLf Then
-                        s = s + vbCrLf
+                        s += vbCrLf
                     Else
-                        s = s + SeparateChar
+                        s += SeparateChar
                     End If
                 End If
             Next
             mt.Clear()
-            mt = Nothing
-            row = Nothing
-            column = Nothing
             Return s
         End Function
 
