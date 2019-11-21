@@ -435,7 +435,6 @@ Namespace db
             bulkCopy.DestinationTableName = destinationTable
             bulkCopy.WriteToServer(sourceTable)
             bulkCopy.Close()
-            bulkCopy = Nothing
         End Sub
 
         ''' <summary>

@@ -11,21 +11,44 @@ Namespace db
     Public Class DataMover
 
         Private Shared m_Separator As Char = Nothing
-        Private Shared m_Comments As String = Nothing
+        Private Shared m_Comments As String() = Nothing
         Private Shared m_EOF As String = Nothing
+        Private Shared m_SourceColumnNumber As Integer() = Nothing
 
-        Public Shared Sub SetSourceTextFile(Separator As Char, Comments As String, Optional EOF As String = Nothing)
+        ''' <summary>
+        ''' 设置源文本文件的导入标识符。
+        ''' </summary>
+        ''' <param name="Separator">字段分隔符。</param>
+        ''' <param name="Comments">注释分隔符。</param>
+        ''' <param name="EOF">文件结束标识符。</param>
+        Public Shared Sub SetSourceTextFile(Separator As Char, Comments As String(), Optional EOF As String = Nothing)
             m_Separator = Separator
             m_Comments = Comments
             m_EOF = EOF
             m_SourceDbType = DBType.TEXT
         End Sub
 
+        ''' <summary>
+        ''' 设置源文本文件的目标导入列的序号。
+        ''' </summary>
+        ''' <param name="Columns">需导入列的序号，第一列以1开始。</param>
+        Public Shared Sub SetSourceColumns(Columns As Integer())
+            m_SourceColumnNumber = Columns
+        End Sub
+
+        ''' <summary>
+        ''' 关闭源文本文件。
+        ''' </summary>
         Public Shared Sub CloseSourceTextFile()
             m_Separator = Nothing
+            Array.Clear(m_Comments, 0, m_Comments.Length)
             m_Comments = Nothing
             m_EOF = Nothing
             m_SourceDbType = Nothing
+            If m_SourceColumnNumber IsNot Nothing Then
+                Array.Clear(m_SourceColumnNumber, 0, m_SourceColumnNumber.Length)
+                m_SourceColumnNumber = Nothing
+            End If
         End Sub
 
         ''' <summary>
@@ -251,6 +274,15 @@ Namespace db
             str = Nothing
         End Sub
 
+        Private Shared Function IsCommentLine(line As String) As Boolean
+            For i As Integer = 0 To m_Comments.Length - 1
+                If line.StartsWith(m_Comments(i)) Then
+                    Return True
+                End If
+            Next
+            Return False
+        End Function
+
         Private Shared Sub MoveDataTextToSqlServer(ByVal FileName As String)
             Dim table As Data.DataTable = New Data.DataTable
             Dim maxColumn As Integer = m_DictionaryOfColumnType.Count - 1
@@ -258,55 +290,58 @@ Namespace db
                 table.Columns.Add("Column" & i)
             Next
             Dim sr As StreamReader = New StreamReader(FileName)
-            Dim dr As Data.DataRow = Nothing
-            Dim strLine As String = Nothing
-            Dim strs() As String = Nothing
+            Dim dr As Data.DataRow
+            Dim strLine As String
+            Dim strs() As String
+            Dim s As String
             While Not sr.EndOfStream
                 strLine = sr.ReadLine
                 If m_EOF <> Nothing And strLine = m_EOF Then
                     Exit While
                 End If
-                If strLine.StartsWith(m_Comments) Then
+                If IsCommentLine(strLine) Then
                     Continue While
+                End If
+                If strLine.StartsWith(m_Separator) Then
+                    strLine = strLine.Substring(1)
                 End If
                 dr = table.NewRow()
                 strs = Split(strLine, m_Separator)
                 For i As Integer = 0 To maxColumn
+                    If m_SourceColumnNumber Is Nothing Then
+                        s = strs(i).Trim()
+                    Else
+                        s = strs(m_SourceColumnNumber(i) - 1).Trim
+                    End If
                     Select Case m_DictionaryOfColumnType.Item(i)
                         Case "VARCHAR", "NVARCHAR"
-                            If strs(i).Length = 0 Then
+                            If s.Length = 0 Then
                                 dr(i) = DBNull.Value
                             Else
-                                dr(i) = strs(i)
+                                dr(i) = s
                             End If
                         Case "DATE"
-                            If IsDate(strs(i)) Then
-                                dr(i) = CDate(strs(i))
-                            ElseIf strs(i).Length = 8 Then
-                                dr(i) = DateValue(strs(i))
+                            If IsDate(s) Then
+                                dr(i) = CDate(s)
+                            ElseIf s.Length = 8 Then
+                                dr(i) = DateValue(s)
                             End If
                         Case "DECIMAL"
-                            If IsNumeric(strs(i)) Then
-                                dr(i) = CDec(strs(i))
+                            If IsNumeric(s) Then
+                                dr(i) = CDec(s)
                             End If
                         Case "INT"
-                            dr(i) = CInt(strs(i))
+                            dr(i) = CInt(s)
                         Case Else
-                            MsgBox("Error Column Type:" + m_DictionaryOfColumnType.Item(i) + " Value:" + strs(i), MsgBoxStyle.Critical)
+                            MsgBox("Error Column Type:" + m_DictionaryOfColumnType.Item(i) + " Value:" + s, MsgBoxStyle.Critical)
                     End Select
                 Next
                 Array.Clear(strs, 0, maxColumn + 1)
                 table.Rows.Add(dr)
             End While
-            strs = Nothing
-            strLine = Nothing
-            dr = Nothing
             sr.Close()
-            sr = Nothing
             BulkCopy(table, m_TargetTableName)
             table.Clear()
-            table = Nothing
-            maxColumn = Nothing
         End Sub
 
         Private Shared Sub MoveDataDB2ToSqlServer(ByVal SelectCommand As String)

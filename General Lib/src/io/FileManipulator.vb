@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.IO.Compression
 
 Namespace io
     Public Class FileManipulator
@@ -17,6 +18,33 @@ Namespace io
         ''' <param name="destinationFileName">文件应复制到的位置。</param>
         Public Shared Sub CopyFile(sourceFileName As String, destinationFileName As String)
             FileIO.FileSystem.CopyFile(sourceFileName, destinationFileName, True)
+        End Sub
+
+        ''' <summary>
+        ''' 将ZIP文件解压缩至当前目录。若Path参数指明的是一个目录，则解压缩该目录下的所有ZIP文件；若Path参数指明的是一个ZIP文件，则解压缩该文件。
+        ''' </summary>
+        ''' <param name="Path">ZIP文件所在的目录名称，或ZIP文件名称。</param>
+        ''' <param name="ExcludeFileName">不需要解压缩的ZIP文件名称，该参数仅在Path参数指明为目录时有效。</param>
+        Public Shared Sub ExtractZips(Path As String, Optional ExcludeFileName As String = Nothing)
+            If Directory.Exists(Path) Then
+                Dim destDir As DirectoryInfo = New DirectoryInfo(Path)
+                For Each zipF As FileInfo In destDir.GetFiles("*.zip")
+                    If zipF.Name.IndexOf(ExcludeFileName) = -1 Then
+                        Try
+                            ZipFile.ExtractToDirectory(Path + "\\" + zipF.Name, Path)
+                        Catch ex As Exception
+                        End Try
+                    End If
+                Next
+                Return
+            End If
+            If File.Exists(Path) Then
+                Dim file As FileInfo = New FileInfo(Path)
+                Try
+                    ZipFile.ExtractToDirectory(Path, file.DirectoryName)
+                Catch ex As Exception
+                End Try
+            End If
         End Sub
 
         Public Shared Sub DeleteDirectory(ByVal DirectoryName As String)

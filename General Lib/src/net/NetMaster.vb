@@ -25,7 +25,6 @@ Namespace net
                 End If
             Next
             Array.Clear(addrList, 0, addrList.Length)
-            addrList = Nothing
             Return IP
         End Function
 
@@ -48,12 +47,11 @@ Namespace net
                 .Password = Password
                 .SshHostKeyFingerprint = KeyFingerprint
             End With
-
             Using session As New Session
                 session.Open(sessionOptions)
-                Dim transferOptions As New TransferOptions
-                transferOptions.TransferMode = TransferMode.Binary
-
+                Dim transferOptions As New TransferOptions With {
+                    .TransferMode = TransferMode.Binary
+                }
                 Dim transferResult As TransferOperationResult
                 For i As Integer = 0 To RemoteFiles.Length - 1
                     transferResult = session.GetFiles(RemoteFiles(i), LocalPath, False, transferOptions)
@@ -63,6 +61,57 @@ Namespace net
             End Using
             sessionOptions = Nothing
         End Sub
+
+        Private Shared Function ClearUriFilePathHead(Path As String) As String
+            If Path.StartsWith("/") Or Path.StartsWith("\") Then
+                Return Path.Substring(1)
+            Else
+                Return Path
+            End If
+        End Function
+
+        Private Shared Function ClearUriFilePathTail(Path As String) As String
+            If Path.EndsWith("/") Or Path.EndsWith("\") Then
+                Return Path.Substring(0, Path.Length - 1)
+            Else
+                Return Path
+            End If
+        End Function
+
+        Private Shared Function ClearUriFtpServer(FtpServer As String) As String
+            If FtpServer.ToLower.StartsWith("ftp://") Then
+                FtpServer = FtpServer.Substring(6)
+            End If
+            Return ClearUriFilePathTail(FtpServer)
+        End Function
+
+        Private Shared Function GetFtpResponse(FtpServerPath As String, UserName As String, Password As String, FtpMethod As String) As FtpWebResponse
+            Dim request As FtpWebRequest = CType(WebRequest.Create(New Uri("ftp://" + FtpServerPath)), FtpWebRequest)
+            request.Method = FtpMethod
+            request.UseBinary = True
+            request.KeepAlive = True
+            request.Timeout = Threading.Timeout.Infinite
+            request.Credentials = New NetworkCredential(UserName, Password)
+            Return CType(request.GetResponse, FtpWebResponse)
+        End Function
+
+        Private Shared Function GetDefaultPath(FtpServer As String, UserName As String, Password As String) As String
+            Dim response As FtpWebResponse = GetFtpResponse(FtpServer, UserName, Password, WebRequestMethods.Ftp.PrintWorkingDirectory)
+            If response Is Nothing Then
+                Return Nothing
+            End If
+            If response.StatusCode = FtpStatusCode.PathnameCreated Then
+                Dim s As String = response.StatusDescription
+                Dim index As Integer = s.IndexOf("""")
+                s = s.Substring(index + 1)
+                index = s.IndexOf("""")
+                response.Close()
+                Return s.Substring(0, index)
+            Else
+                response.Close()
+                Return Nothing
+            End If
+        End Function
 
         ''' <summary>
         ''' 从FTP服务器下载文件。
@@ -74,29 +123,24 @@ Namespace net
         ''' <param name="LocalPath">下载文件后的本地路径。</param>
         Public Shared Sub DownloadFTPFile(FtpServer As String, UserName As String, Password As String,
                                         RemotePath As String, LocalPath As String)
-            If RemotePath.StartsWith("/") Or RemotePath.StartsWith("\") Then
-                RemotePath = RemotePath.Substring(1)
+            FtpServer = ClearUriFtpServer(FtpServer)
+            RemotePath = ClearUriFilePathHead(RemotePath)
+            Dim rootDirectory As String = GetDefaultPath(FtpServer, UserName, Password)
+            If rootDirectory IsNot Nothing Then
+                If rootDirectory <> "/" Then
+                    If RemotePath.StartsWith(rootDirectory.Substring(1)) Then
+                        RemotePath = RemotePath.Substring(rootDirectory.Length)
+                    End If
+                End If
             End If
-            If FtpServer.ToLower.StartsWith("ftp://") Then
-                FtpServer = FtpServer.Substring(6)
-            End If
-            If FtpServer.EndsWith("/") Then
-                FtpServer = FtpServer.Substring(0, FtpServer.Length - 1)
-            End If
-            Dim remoteFile As String = "ftp://" + FtpServer + "/" + RemotePath
+            Dim remoteFile As String = FtpServer + "/" + RemotePath
             Dim response As FtpWebResponse = Nothing
             Dim responseStream As Stream = Nothing
             Dim outputStream As FileStream = Nothing
             Dim bufferSize As Integer = 65536
             Dim buffer(bufferSize - 1) As Byte
             Try
-                Dim request As FtpWebRequest = CType(WebRequest.Create(New Uri(remoteFile)), FtpWebRequest)
-                request.Method = WebRequestMethods.Ftp.DownloadFile
-                request.UseBinary = True
-                request.KeepAlive = False
-                request.Timeout = Threading.Timeout.Infinite
-                request.Credentials = New NetworkCredential(UserName, Password)
-                response = CType(request.GetResponse, FtpWebResponse)
+                response = GetFtpResponse(remoteFile, UserName, Password, WebRequestMethods.Ftp.DownloadFile)
                 responseStream = response.GetResponseStream
                 outputStream = New FileStream(LocalPath, FileMode.Create)
                 Dim readCount As Integer = responseStream.Read(buffer, 0, bufferSize)
@@ -138,12 +182,8 @@ Namespace net
         ''' <param name="Keyword">特定名称。</param>
         Public Shared Function DownloadFTPFiles(FtpServer As String, UserName As String, Password As String,
                                         RemotePath As String, LocalPath As String, Keyword As String) As Integer
-            If RemotePath.EndsWith("/") Or RemotePath.EndsWith("\") Then
-                RemotePath = RemotePath.Substring(0, RemotePath.Length - 1)
-            End If
-            If LocalPath.EndsWith("/") Or LocalPath.EndsWith("\") Then
-                LocalPath = LocalPath.Substring(0, LocalPath.Length - 1)
-            End If
+            RemotePath = ClearUriFilePathTail(RemotePath)
+            LocalPath = ClearUriFilePathTail(LocalPath)
             Dim lst As List(Of String) = FTPPathFiles(FtpServer, UserName, Password, RemotePath)
             If lst Is Nothing Then
                 Return 0
@@ -157,22 +197,13 @@ Namespace net
                 End If
             Next
             lst.Clear()
-            lst = Nothing
-            countFile = Nothing
             Return count
         End Function
 
         Private Shared ReadOnly Property FTPPathFiles(FtpServer As String, UserName As String, Password As String,
                                         RemotePath As String) As List(Of String)
             Get
-                Dim remoteFile As String = "ftp://" + FtpServer + "/" + RemotePath + "/"
-                Dim request As FtpWebRequest = CType(WebRequest.Create(New Uri(remoteFile)), FtpWebRequest)
-                request.Method = WebRequestMethods.Ftp.ListDirectory
-                request.UseBinary = True
-                request.KeepAlive = False
-                request.Timeout = Threading.Timeout.Infinite
-                request.Credentials = New NetworkCredential(UserName, Password)
-                Dim response As FtpWebResponse = CType(request.GetResponse, FtpWebResponse)
+                Dim response As FtpWebResponse = GetFtpResponse(FtpServer + "/" + RemotePath + "/", UserName, Password, WebRequestMethods.Ftp.ListDirectory)
                 Dim responseStream As Stream = response.GetResponseStream
                 Dim reader As StreamReader = New StreamReader(responseStream)
                 Dim s As String = reader.ReadLine
@@ -185,14 +216,8 @@ Namespace net
                     End While
                 End If
                 reader.Close()
-                reader = Nothing
                 responseStream.Close()
-                responseStream = Nothing
                 response.Close()
-                response = Nothing
-                request = Nothing
-                remoteFile = Nothing
-                s = Nothing
                 Return lst
             End Get
         End Property
@@ -238,9 +263,7 @@ Namespace net
             For Each att As Attachment In mail.Attachments
                 att.Dispose()
             Next
-            smtpClt = Nothing
-            mail = Nothing
-            password = Nothing
+            smtpClt.Dispose()
         End Sub
 
         Private Shared m_SmtpHost As String = Nothing
@@ -320,9 +343,7 @@ Namespace net
             smtpClt.Credentials = New NetworkCredential(mail.From.Address, password)
             smtpClt.DeliveryMethod = SmtpDeliveryMethod.Network
             smtpClt.Send(mail)
-            smtpClt = Nothing
-            mail = Nothing
-            password = Nothing
+            smtpClt.Dispose()
         End Sub
 
     End Class
