@@ -18,8 +18,6 @@ Namespace sys
             Dim asm As Assembly = Assembly.LoadFrom(AssemblyFileName)
             Dim t1 As Type = asm.GetType(FullClassName, True)
             Dim o As Object = asm.CreateInstance(t1.FullName)
-            t1 = Nothing
-            asm = Nothing
             Return CType(o, T)
         End Function
 
@@ -34,8 +32,6 @@ Namespace sys
             Dim asm As Assembly = Assembly.GetCallingAssembly()
             Dim t1 As Type = asm.GetType(FullClassName, True)
             Dim o As Object = asm.CreateInstance(t1.FullName)
-            t1 = Nothing
-            asm = Nothing
             Return CType(o, T)
         End Function
     End Class

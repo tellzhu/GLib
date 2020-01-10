@@ -56,7 +56,7 @@ Namespace office
             If FolderName IsNot Nothing Then
                 folder = folder.Folders.Item(FolderName)
             End If
-            Dim mail As MailItem = Nothing
+            Dim mail As MailItem
             Dim cnt As Integer = folder.Items.Count
             m_mailList = New List(Of MailItem)
             For i As Integer = cnt To 1 Step -1
@@ -69,10 +69,6 @@ Namespace office
                     Exit For
                 End If
             Next
-            cnt = Nothing
-            mail = Nothing
-            folder = Nothing
-            nspace = Nothing
             If m_mailList.Count = 0 Then
                 m_mailList = Nothing
                 Return 0
@@ -132,7 +128,7 @@ Namespace office
             If FolderName IsNot Nothing Then
                 folder = folder.Folders.Item(FolderName)
             End If
-            Dim mail As MailItem = Nothing
+            Dim mail As MailItem
             Dim cnt As Integer = folder.Items.Count
             Dim s As String = Nothing
             For i As Integer = cnt To 1 Step -1
@@ -150,10 +146,6 @@ Namespace office
                         End If
                 End Select
             Next
-            cnt = Nothing
-            mail = Nothing
-            folder = Nothing
-            nspace = Nothing
             Return s
         End Function
 

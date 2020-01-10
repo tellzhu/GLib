@@ -28,7 +28,6 @@
                 Dim m_CurrentTimestamp As Date = Now
                 Dim val As Integer = CInt(DateDiff(Unit, m_FirstTimestamp, m_CurrentTimestamp))
                 m_LastTimestamp = m_CurrentTimestamp
-                m_CurrentTimestamp = Nothing
                 Return val
             End Get
         End Property
@@ -45,11 +44,9 @@
                 Dim m_CurrentTimestamp As Date = Now
                 Dim val As Integer = CInt(DateDiff(Unit, m_LastTimestamp, m_CurrentTimestamp))
                 m_LastTimestamp = m_CurrentTimestamp
-                m_CurrentTimestamp = Nothing
                 Return val
             End Get
         End Property
-
 
     End Class
 End Namespace

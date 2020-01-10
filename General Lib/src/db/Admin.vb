@@ -78,7 +78,6 @@ Namespace db
             If m_ConnectionSet.Count > 0 Then
                 For Each con As GeneralConnection In m_ConnectionSet.Values
                     CloseDBConnection(con)
-                    con = Nothing
                 Next
                 m_ConnectionSet.Clear()
             End If
@@ -110,24 +109,23 @@ Namespace db
             Return con.ADODBRowCount
         End Function
 
-    Private Shared Sub CloseRecordsetResource()
-        Dim tId As Integer = CurrentThread.ManagedThreadId
-        If m_ConnectionSet.ContainsKey(tId) Then
-            Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
-            If con.ADODBRecordset IsNot Nothing Then
-                con.ADODBRecordset.Close()
-                con.ADODBRecordset = Nothing
+        Private Shared Sub CloseRecordsetResource()
+            Dim tId As Integer = CurrentThread.ManagedThreadId
+            If m_ConnectionSet.ContainsKey(tId) Then
+                Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
+                If con.ADODBRecordset IsNot Nothing Then
+                    con.ADODBRecordset.Close()
+                    con.ADODBRecordset = Nothing
+                End If
+                If con.ADODBConnection IsNot Nothing Then
+                    con.ADODBConnection.Close()
+                    con.ADODBConnection = Nothing
+                End If
+                m_ConnectionSet.Item(tId) = con
             End If
-            If con.ADODBConnection IsNot Nothing Then
-                con.ADODBConnection.Close()
-                con.ADODBConnection = Nothing
-            End If
-            m_ConnectionSet.Item(tId) = con
-        End If
-        tId = Nothing
-    End Sub
+        End Sub
 
-    Friend Shared Function CopyFromRecordset(ByRef R As Range) As Integer
+        Friend Shared Function CopyFromRecordset(ByRef R As Range) As Integer
         Dim tId As Integer = CurrentThread.ManagedThreadId
         If Not m_ConnectionSet.ContainsKey(tId) Then
             Return 0
@@ -143,61 +141,76 @@ Namespace db
         con.ADODBConnection.Close()
         con.ADODBConnection = Nothing
         m_ConnectionSet.Item(tId) = con
-        tId = Nothing
-        Return len
-    End Function
+            Return len
+        End Function
 
-    ''' <summary>
-    ''' 判断给定SQL查询条件后的数据库表是否存在结果集。
-    ''' </summary>
-    ''' <param name="TableName">数据库表名称。</param>
-    ''' <param name="Condition">SQL查询条件。</param>
-    ''' <returns>若查询结果存在结果集，则返回False；否则返回True。</returns>
-    ''' <remarks></remarks>
-    Public Shared Function IsEmptyTable(ByVal TableName As String, Optional ByVal Condition As String = Nothing) As Boolean
-        Return Count(TableName, Condition) = 0
-    End Function
+        ''' <summary>
+        ''' 判断给定SQL查询条件后的数据库表是否存在结果集。
+        ''' </summary>
+        ''' <param name="TableName">数据库表名称。</param>
+        ''' <param name="Condition">SQL查询条件。</param>
+        ''' <returns>若查询结果存在结果集，则返回False；否则返回True。</returns>
+        ''' <remarks></remarks>
+        Public Shared Function IsEmptyTable(ByVal TableName As String, Optional ByVal Condition As String = Nothing) As Boolean
+            Return Count(TableName, Condition) = 0
+        End Function
 
-    Public Shared Sub Aggregate(ByVal TableName As String, ByVal TargetColumn As String, _
+        Public Shared Sub AddStoredProcedure(ProcName As String, ParaNames As String(), ParaTypes As String(), ProcBody As String)
+            If Not ProcName.Contains(".") Then
+                ProcName = "dbo." + ProcName
+            End If
+            If Val(Of Integer)("select count(1) from sys.all_objects t1 inner join sys.schemas t2 on t1.schema_id=t2.schema_id
+where type='P' and t2.name+'.'+t1.name='" + ProcName + "'") > 0 Then
+                Execute("drop procedure " + ProcName)
+            End If
+            Dim sql As String = "CREATE PROCEDURE " + ProcName + " " + vbCrLf
+            If ParaNames IsNot Nothing Then
+                Dim para As String = ""
+                For i As Integer = 0 To ParaNames.Length - 1
+                    para += "@" + ParaNames(i) + " AS " + ParaTypes(i) + ","
+                Next
+                sql += " " + para.Substring(0, para.Length - 1) + " " + vbCrLf
+            End If
+            sql += "AS " + vbCrLf + "BEGIN" + vbCrLf + "SET NOCOUNT ON;" + vbCrLf + ProcBody + vbCrLf + "END"
+            Execute(sql)
+        End Sub
+
+        Public Shared Sub Aggregate(ByVal TableName As String, ByVal TargetColumn As String,
   ByVal TargetValue As String, ByVal Groups As String, Optional ByVal Condition As String = Nothing)
-        Execute("DELETE FROM " + TableName + " WHERE " _
+            Execute("DELETE FROM " + TableName + " WHERE " _
         + TargetColumn + "=" + TargetValue)
 
-        If IsEmptyTable(TableName, Condition) Then
-            Return
-        End If
-
-        Dim group As String() = Split(Groups, ",")
-        Dim command As String = "INSERT INTO " + TableName + " SELECT "
-        Dim cols As String() = Columns(TableName)
-        For i As Integer = 0 To cols.Length - 1
-            If TargetColumn = cols(i) Then
-                command += TargetValue
-            ElseIf Array.IndexOf(group, cols(i)) <> -1 Then
-                command += cols(i)
-            Else
-                command = command + "SUM(" + cols(i) + ")"
+            If IsEmptyTable(TableName, Condition) Then
+                Return
             End If
-            If i = cols.Length - 1 Then
-                command += " FROM " + TableName
-                If Condition IsNot Nothing Then
-                    command += " WHERE " + Condition
-                End If
-                If Groups <> "" Then
-                    command += " GROUP BY " + Groups
-                End If
-            Else
-                command += ","
-            End If
-        Next
-        group = Nothing
-        cols = Nothing
 
-        Execute(command)
-        command = Nothing
-    End Sub
+            Dim group As String() = Split(Groups, ",")
+            Dim command As String = "INSERT INTO " + TableName + " SELECT "
+            Dim cols As String() = Columns(TableName)
+            For i As Integer = 0 To cols.Length - 1
+                If TargetColumn = cols(i) Then
+                    command += TargetValue
+                ElseIf Array.IndexOf(group, cols(i)) <> -1 Then
+                    command += cols(i)
+                Else
+                    command = command + "SUM(" + cols(i) + ")"
+                End If
+                If i = cols.Length - 1 Then
+                    command += " FROM " + TableName
+                    If Condition IsNot Nothing Then
+                        command += " WHERE " + Condition
+                    End If
+                    If Groups <> "" Then
+                        command += " GROUP BY " + Groups
+                    End If
+                Else
+                    command += ","
+                End If
+            Next
+            Execute(command)
+        End Sub
 
-    Public Shared Sub DropTempTable(ByVal TableName As String)
+        Public Shared Sub DropTempTable(ByVal TableName As String)
         Execute("DROP TABLE SESSION." + TableName)
     End Sub
 
@@ -216,26 +229,22 @@ Namespace db
     ''' <param name="NewTableName">新的数据表名。</param>
     ''' <remarks></remarks>
     Public Shared Sub RenameTable(OldTableName As String, NewTableName As String)
-        Select Case DatabaseType
-            Case DBType.SQLSERVER
-                If OldTableName.IndexOf(".") = -1 Then
-                    OldTableName = "dbo." + OldTableName
-                End If
-                If NewTableName.IndexOf(".") = -1 Then
-                    NewTableName = "dbo." + NewTableName
-                End If
-                Dim s1 As String = OldTableName.Substring(0, OldTableName.IndexOf("."))
-                Dim s2 As String = NewTableName.Substring(0, NewTableName.IndexOf("."))
-                If s1 <> s2 Then
-                    s1 = Nothing
-                    s2 = Nothing
-                    Return
-                End If
-                RenameObject(OldTableName, NewTableName)
-                s1 = Nothing
-                s2 = Nothing
-        End Select
-    End Sub
+            Select Case DatabaseType
+                Case DBType.SQLSERVER
+                    If OldTableName.IndexOf(".") = -1 Then
+                        OldTableName = "dbo." + OldTableName
+                    End If
+                    If NewTableName.IndexOf(".") = -1 Then
+                        NewTableName = "dbo." + NewTableName
+                    End If
+                    Dim s1 As String = OldTableName.Substring(0, OldTableName.IndexOf("."))
+                    Dim s2 As String = NewTableName.Substring(0, NewTableName.IndexOf("."))
+                    If s1 <> s2 Then
+                        Return
+                    End If
+                    RenameObject(OldTableName, NewTableName)
+            End Select
+        End Sub
 
     ''' <summary>
     ''' 重命名一个数据视图。
@@ -244,26 +253,22 @@ Namespace db
     ''' <param name="NewViewName">新的数据视图名。</param>
     ''' <remarks></remarks>
     Public Shared Sub RenameView(OldViewName As String, NewViewName As String)
-        Select Case DatabaseType
-            Case DBType.SQLSERVER
-                If OldViewName.IndexOf(".") = -1 Then
-                    OldViewName = "dbo." + OldViewName
-                End If
-                If NewViewName.IndexOf(".") = -1 Then
-                    NewViewName = "dbo." + NewViewName
-                End If
-                Dim s1 As String = OldViewName.Substring(0, OldViewName.IndexOf("."))
-                Dim s2 As String = NewViewName.Substring(0, NewViewName.IndexOf("."))
-                If s1 <> s2 Then
-                    s1 = Nothing
-                    s2 = Nothing
-                    Return
-                End If
-                RenameObject(OldViewName, NewViewName)
-                s1 = Nothing
-                s2 = Nothing
-        End Select
-    End Sub
+            Select Case DatabaseType
+                Case DBType.SQLSERVER
+                    If OldViewName.IndexOf(".") = -1 Then
+                        OldViewName = "dbo." + OldViewName
+                    End If
+                    If NewViewName.IndexOf(".") = -1 Then
+                        NewViewName = "dbo." + NewViewName
+                    End If
+                    Dim s1 As String = OldViewName.Substring(0, OldViewName.IndexOf("."))
+                    Dim s2 As String = NewViewName.Substring(0, NewViewName.IndexOf("."))
+                    If s1 <> s2 Then
+                        Return
+                    End If
+                    RenameObject(OldViewName, NewViewName)
+            End Select
+        End Sub
 
     ''' <summary>
         ''' 清空数据库表中的数据。
@@ -318,9 +323,8 @@ Namespace db
             If m_FieldCountSet.ContainsKey(tId) Then
                 Return m_FieldCountSet.Item(tId)
             Else
-                tId = Nothing
-                Return 0
-            End If
+                    Return 0
+                End If
             End Get
     End Property
 
@@ -350,23 +354,21 @@ Namespace db
         End If
     End Sub
 
-    Private Shared Sub RecordQueryFieldCount(ByVal FieldCount As Integer)
-        Dim tId As Integer = CurrentThread.ManagedThreadId
-        m_FieldCountSet.Item(tId) = FieldCount
-        If Not m_ConnectionIsReused Then
-            Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
-            CloseDBConnection(con)
-            m_ConnectionSet.Item(tId) = Nothing
-            m_ConnectionSet.Remove(tId)
-            con = Nothing
-        End If
-        tId = Nothing
-    End Sub
+        Private Shared Sub RecordQueryFieldCount(ByVal FieldCount As Integer)
+            Dim tId As Integer = CurrentThread.ManagedThreadId
+            m_FieldCountSet.Item(tId) = FieldCount
+            If Not m_ConnectionIsReused Then
+                Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
+                CloseDBConnection(con)
+                m_ConnectionSet.Item(tId) = Nothing
+                m_ConnectionSet.Remove(tId)
+            End If
+        End Sub
 
-    Private Shared Sub InitDBConnection()
+        Private Shared Sub InitDBConnection()
         Dim tId As Integer = CurrentThread.ManagedThreadId
-        Dim con As GeneralConnection = Nothing
-        If Not m_ConnectionSet.ContainsKey(tId) Then
+            Dim con As GeneralConnection
+            If Not m_ConnectionSet.ContainsKey(tId) Then
             con = New GeneralConnection
             OpenDBConnection(con)
             m_ConnectionSet.Add(tId, con)

@@ -291,8 +291,6 @@ Namespace office
             For i As Integer = 0 To s.Length - 1
                 setText(Cell(r.Row + i * rowDelta, r.Column + i * columnDelta), s(i), rowCount - 1, columnCount - 1)
             Next
-            rowDelta = Nothing
-            columnDelta = Nothing
         End Sub
 
         Friend Sub setBorders(ByVal type As BorderType, ByVal weight As BorderWeight)

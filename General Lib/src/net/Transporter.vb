@@ -19,10 +19,7 @@ Namespace net
                 Array.Copy(data, fullCount, buffer, 0, length - fullCount)
                 sock.Send(buffer, length - fullCount, SocketFlags.None)
             End If
-            fullCount = Nothing
-            length = Nothing
             Array.Clear(buffer, 0, TCPBufferSize)
-            buffer = Nothing
         End Sub
 
         Friend Function ReceiveData(ByRef sock As Socket) As Byte()
@@ -51,11 +48,7 @@ Namespace net
             Array.Clear(lst(count), 0, lst(count).Length)
             lst(count) = Nothing
             lst.Clear()
-            lst = Nothing
-            count = Nothing
-            totalCount = Nothing
             Array.Clear(buffer, 0, TCPBufferSize)
-            buffer = Nothing
             Return data
         End Function
 

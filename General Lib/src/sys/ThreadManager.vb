@@ -11,7 +11,6 @@ Namespace sys
         Public Sub ExecuteAction(ByRef action As System.Action)
             Dim mTask As Task = Task.Factory.StartNew(action)
             mTask.Wait()
-            mTask = Nothing
         End Sub
 
         ''' <summary>
@@ -26,9 +25,7 @@ Namespace sys
                 mTask(i) = Task.Factory.StartNew(action(i))
             Next
             Task.WaitAll(mTask)
-            maxIndex = Nothing
             Array.Clear(mTask, 0, mTask.Length)
-            mTask = Nothing
         End Sub
     End Class
 End Namespace

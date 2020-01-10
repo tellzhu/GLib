@@ -213,9 +213,7 @@ Namespace db
                         ddl += "," + vbCrLf
                     End If
                 Next
-                index = Nothing
                 mt.Clear()
-                mt = Nothing
                 Return ddl
             End If
             Return Nothing
@@ -238,7 +236,7 @@ Namespace db
                             schemaTableName = "tables"
                         End If
                         Dim index As Integer = TableOrViewName.IndexOf(".")
-                        Dim sql As String = Nothing
+                        Dim sql As String
                         If index = -1 Then
                             sql = "SELECT T2.name,UPPER(T3.name) FROM sys." + schemaTableName + " T1 INNER JOIN sys.columns T2 " _
                               + "ON T1.object_id=T2.object_id INNER JOIN sys.types T3 ON T2.system_type_id=T3.system_type_id" _
@@ -250,8 +248,6 @@ Namespace db
   + " WHERE T1.name='" + TableOrViewName.Substring(index + 1) + "' AND T4.name='" _
   + TableOrViewName.Substring(0, index) + "' AND T3.name<>'sysname'"
                         End If
-                        schemaTableName = Nothing
-                        index = Nothing
                         Return Pair(sql)
                     Case DBType.ORACLE
                         Dim index As Integer = TableOrViewName.IndexOf(".")
@@ -305,7 +301,6 @@ Namespace db
                         If index <> -1 Then
                             TableOrViewName = TableOrViewName.Substring(index + 1)
                         End If
-                        index = Nothing
                         Return ExecuteType(Of String)("select column_name from user_tab_columns where table_name='" + TableOrViewName.ToUpper _
                                                + "' order by column_id").ToArray()
                     Case Else

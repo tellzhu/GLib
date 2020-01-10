@@ -55,9 +55,8 @@ Namespace office
 			For i As Integer = 1 To s.Length - 1 Step 1
 				str = str + ",'" + CurrentSheet.Name + "'!" + s(i)
 			Next
-			s = Nothing
-			Return str
-		End Function
+            Return str
+        End Function
 
         Private Shared Sub ScaleAxis()
             With CurrentChart
@@ -88,18 +87,18 @@ Namespace office
                 End If
                 Dim i As Long = 1
                 Do While unit \ 10 > 0
-                    unit = unit \ 10
-                    minVal = minVal \ 10
-                    i = i * 10
+                    unit \= 10
+                    minVal \= 10
+                    i *= 10
                 Loop
-                unit = unit * i
-                minVal = minVal * i
+                unit *= i
+                minVal *= i
                 Do While minVal > minValue * scale
-                    minVal = minVal - unit
+                    minVal -= unit
                 Loop
                 i = minVal
                 Do While i < maxValue * scale
-                    i = i + unit
+                    i += unit
                 Loop
 
                 With CType(CurrentChart.Axes(XlAxisType.xlValue), Axis)
@@ -147,18 +146,18 @@ Namespace office
                 End If
                 Dim i As Long = 1
                 Do While unit \ 10 > 0
-                    unit = unit \ 10
-                    minVal = minVal \ 10
-                    i = i * 10
+                    unit \= 10
+                    minVal \= 10
+                    i *= 10
                 Loop
-                unit = unit * i
-                minVal = minVal * i
+                unit *= i
+                minVal *= i
                 Do While minVal > minValue * scale
-                    minVal = minVal - unit
+                    minVal -= unit
                 Loop
                 i = minVal
                 Do While i < maxValue * scale
-                    i = i + unit
+                    i += unit
                 Loop
 
                 With CType(m_currentChart.Axes(XlAxisType.xlValue), Axis)
@@ -327,9 +326,6 @@ Namespace office
             value += mt.Cell(row, 2)
             m_currentSeriesCollection.Item(1).Values = "={" + value + "}"
             m_currentSeriesCollection.Item(1).XValues = "={" + name + "}"
-            row = Nothing
-            name = Nothing
-            value = Nothing
         End Sub
 
         Private Shared Sub PrintChart(ByVal chrtType As ChartType, ByVal ChartTitle As String, _
@@ -361,11 +357,7 @@ Namespace office
                 m_currentSeriesCollection.Item(cnt).Formula = "=SERIES(""" + SeriesNames(i - 1) + """,,{" + s(i) + "}," + CStr(cnt) + ")"
             Next
             m_currentSeriesCollection.Item(cnt).XValues = "={" + s(0) + "}"
-            cnt = Nothing
-            row = Nothing
-            column = Nothing
             Array.Clear(s, 0, s.Length)
-            s = Nothing
 
             DeleteExistedOldSeries()
             If chrtType = ChartType.LieChart Then

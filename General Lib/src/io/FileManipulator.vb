@@ -20,6 +20,27 @@ Namespace io
             FileIO.FileSystem.CopyFile(sourceFileName, destinationFileName, True)
         End Sub
 
+        Public Shared Function FileExists(fileNames As String(), IsAutoDelete As Boolean) As Boolean
+            If fileNames Is Nothing Then
+                Return False
+            End If
+            Dim FinalFileIsNotExist As Boolean = False
+            For i As Integer = 0 To fileNames.Length - 1
+                If Not File.Exists(fileNames(i)) Then
+                    FinalFileIsNotExist = True
+                    Exit For
+                End If
+            Next
+            If FinalFileIsNotExist And IsAutoDelete Then
+                For i As Integer = fileNames.Length - 1 To 0 Step -1
+                    If File.Exists(fileNames(i)) Then
+                        File.Delete(fileNames(i))
+                    End If
+                Next
+            End If
+            Return Not FinalFileIsNotExist
+        End Function
+
         ''' <summary>
         ''' 将ZIP文件解压缩至当前目录。若Path参数指明的是一个目录，则解压缩该目录下的所有ZIP文件；若Path参数指明的是一个ZIP文件，则解压缩该文件。
         ''' </summary>
@@ -54,7 +75,6 @@ Namespace io
         Public Shared Function IsHidden(ByVal FileName As String) As Boolean
             Dim fi As FileInfo = FileIO.FileSystem.GetFileInfo(FileName)
             Dim b As Boolean = (fi.Attributes And FileAttributes.Hidden) = FileAttributes.Hidden
-            fi = Nothing
             Return b
         End Function
 

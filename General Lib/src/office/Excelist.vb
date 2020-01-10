@@ -353,8 +353,6 @@ Namespace office
             tempSheet = CType(currentWorkbook.Sheets(SheetsCount), Worksheet)
             tempSheet.Name = NewSheetName
             tempBook.Close(SaveChanges:=False)
-            tempBook = Nothing
-            tempSheet = Nothing
         End Sub
 
         ''' <summary>
@@ -370,8 +368,6 @@ Namespace office
             Dim index As Integer = csheet.Index + 1
             csheet = CType(currentWorkbook.Sheets(index), Worksheet)
             csheet.Name = NewName
-            index = Nothing
-            csheet = Nothing
         End Sub
 
         Friend Shared Function GetChartByName(ByVal name As String) As Chart
@@ -479,10 +475,9 @@ Namespace office
                 If IsAutoIncrement Then
                     Dim i As Integer = 1
                     While SheetIsContained(name + CStr(i))
-                        i = i + 1
+                        i += 1
                     End While
                     AddNewSheet(name + CStr(i))
-                    i = Nothing
                 Else
                     RemoveSheet(name)
                     AddNewSheet(name)
@@ -573,7 +568,6 @@ Namespace office
             ElseIf r.Columns.Count = 1 And r.Rows.Count > 1 Then
                 targetAddress = Address(Base(r.Row, r.Column + 1), r.Rows.Count - 1, numberOfCopies - 1)
             End If
-            r = Nothing
             If targetAddress = Nothing Then
                 Return
             End If

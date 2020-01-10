@@ -29,7 +29,6 @@ Namespace office
         Public Shared Sub AddSlide(ByVal Index As Integer)
             Dim pptLayout As CustomLayout = currentPresentation.Slides(Index).CustomLayout
             currentPresentation.Slides.AddSlide(Index, pptLayout)
-            pptLayout = Nothing
         End Sub
 
         ''' <summary>

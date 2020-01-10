@@ -65,7 +65,7 @@ Namespace finance
             Dim N As Integer = CouponNumber(nextPaymentDate, Maturity, Frequency)
             Dim A As Integer = DaysCount(prevPaymentDate, SettlementDate, CType(InterestBasis, DateProcessor.InterestBasis))
 
-            Dim Sn As Double = Nothing
+            Dim Sn As Double
             If Yield = 0 Then
                 Sn = Redemption + (N - A / E) * 100 * (Rate / Frequency)
             Else
@@ -73,16 +73,7 @@ Namespace finance
                 Sn = (1 - Pow(SingleProduct, -N)) / (SingleProduct - 1)
                 Sn *= (100 * Rate / Frequency) * Pow(SingleProduct, 1 - DSC / E)
                 Sn = Sn + Redemption * Pow(SingleProduct, -(N - 1 + DSC / E)) - 100 * (Rate / Frequency) * (A / E)
-                SingleProduct = Nothing
             End If
-
-            nextPaymentDate = Nothing
-            prevPaymentDate = Nothing
-            DSC = Nothing
-            N = Nothing
-            A = Nothing
-            E = Nothing
-
             Return Sn
         End Function
 
@@ -127,10 +118,8 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
             Dim E As Decimal = CouponDays(prevPaymentDate, nextPaymentDate, Frequency, CType(InterestBasis, DateProcessor.InterestBasis))
             Dim DSC As Integer = DaysCount(SettlementDate, nextPaymentDate, CType(InterestBasis, DateProcessor.InterestBasis))
             Dim N As Integer = CouponNumber(nextPaymentDate, Maturity, Frequency)
-            nextPaymentDate = Nothing
-            prevPaymentDate = Nothing
 
-            Dim Sn As Double = Nothing
+            Dim Sn As Double
             Dim d As Double = -1 + DSC / E
             If Yield = 0 Then
                 Sn = (N + d + Rate * (N * d + 0.5 * N * (N + 1)) / Frequency) / (Frequency + N * Rate)
@@ -141,15 +130,7 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
                 Dim f As Double = (1 - Pow(c, -N)) * Frequency / Yield
                 Sn = (b * Pow(c, -d) * f + a) * Frequency
                 Sn = ((N + d) * a + b * (d * Pow(c, -d) * f + (1 + Frequency / Yield) * (f - N * Pow(c, -N - 1)))) / Sn
-                c = Nothing
-                b = Nothing
-                a = Nothing
-                f = Nothing
             End If
-            E = Nothing
-            DSC = Nothing
-            N = Nothing
-            d = Nothing
             Return Sn
         End Function
 
@@ -176,7 +157,7 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
             Dim A As Integer = DaysCount(prevPaymentDate, SettlementDate, CType(InterestBasis, DateProcessor.InterestBasis))
             Dim DSR As Integer = DaysCount(SettlementDate, nextPaymentDate, CType(InterestBasis, DateProcessor.InterestBasis))
             Dim Sn As Double = 0
-            Dim SingleRate As Double = Nothing
+            Dim SingleRate As Double
 
             If N <= 1 Then
                 SingleRate = Rate / Frequency
@@ -224,11 +205,9 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
                     Else
                         Sn = YieldSeed
                         IsFixedDouble = True
-                        borderCount = Nothing
                         Exit While
                     End If
                     If borderCount = 3 Then
-                        borderCount = Nothing
                         Exit While
                     End If
                     count += 1
@@ -257,19 +236,7 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
                     End While
                     Sn = YieldSeed
                 End If
-                count = Nothing
-                lowLimit = Nothing
-                highLimit = Nothing
-                IsFixedDouble = Nothing
             End If
-
-            SingleRate = Nothing
-            nextPaymentDate = Nothing
-            prevPaymentDate = Nothing
-            N = Nothing
-            E = Nothing
-            A = Nothing
-            DSR = Nothing
 
             Return NormalizeYield(Sn)
         End Function
@@ -288,7 +255,6 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
                                      ByVal Price As Decimal, ByVal Redemption As Decimal, ByVal InterestBasis As Integer) As Double
             Dim denominator As Double = Price * YearFrac(SettlementDate, Maturity, InterestBasis)
             If denominator = 0 Then
-                denominator = Nothing
                 Return 0
             End If
             Return NormalizeYield((Redemption - Price) / denominator)
@@ -300,9 +266,6 @@ ByVal Yield As Double, ByVal Frequency As Integer, ByVal InterestBasis As Intege
             Dim YIS As Double = YearFrac(IssueDate, SettlementDate, InterestBasis)
             Dim YSM As Double = YearFrac(SettlementDate, Maturity, InterestBasis)
             If YSM = 0 Then
-                YIM = Nothing
-                YIS = Nothing
-                YSM = Nothing
                 Return 0
             End If
             Return NormalizeYield((100 * (1 + YIM * Rate) / (Price + YIS * Rate * 100) - 1) / YSM)

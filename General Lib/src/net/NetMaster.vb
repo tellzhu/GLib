@@ -237,7 +237,7 @@ Namespace net
         Public Shared Sub SendMail(SmtpHost As String, SmtpPort As Integer, SenderAddress As String, DisplayName As String,
                                  Receivers As String, CC As String, BCC As String, Subject As String, Optional Attachments() As String = Nothing)
             SetSmtpService(SmtpHost, SmtpPort, SenderAddress, DisplayName)
-            SendMail(Receivers, CC, BCC, Subject, Attachments)
+            SendMail(Receivers, CC, BCC, Subject, Nothing, Attachments)
         End Sub
 
         ''' <summary>
@@ -247,9 +247,10 @@ Namespace net
         ''' <param name="CC">抄送人邮件地址。</param>
         ''' <param name="BCC">密送人邮件地址。</param>
         ''' <param name="Subject">邮件主题。</param>
+        ''' <param name="Body">邮件正文。</param>
         ''' <param name="Attachments">附件所在文件的全路径名称。</param>
-        Public Shared Sub SendMail(Receivers As String, CC As String, BCC As String, Subject As String, Optional Attachments() As String = Nothing)
-            Dim mail As MailMessage = GetNewMailMessage(Receivers, CC, BCC, Subject)
+        Public Shared Sub SendMail(Receivers As String, CC As String, BCC As String, Subject As String, Body As String, Optional Attachments() As String = Nothing)
+            Dim mail As MailMessage = GetNewMailMessage(Receivers, CC, BCC, Subject, Body)
             If Attachments IsNot Nothing Then
                 For i As Integer = 0 To Attachments.Length - 1
                     mail.Attachments.Add(New Attachment(Attachments(i)))
@@ -304,7 +305,7 @@ Namespace net
             SendMail(Receivers, CC, BCC, Subject, Body, IsHTML)
         End Sub
 
-        Private Shared Function GetNewMailMessage(Receivers As String, CC As String, BCC As String, Subject As String) As MailMessage
+        Private Shared Function GetNewMailMessage(Receivers As String, CC As String, BCC As String, Subject As String, Body As String) As MailMessage
             Dim mail As MailMessage = New MailMessage
             If Receivers <> Nothing Then
                 mail.To.Add(Receivers)
@@ -317,6 +318,9 @@ Namespace net
             End If
             If Subject <> Nothing Then
                 mail.Subject = Subject
+            End If
+            If Body <> Nothing Then
+                mail.Body = Body
             End If
             mail.From = New MailAddress(m_SenderAddress, m_DisplayName)
             Return mail
@@ -333,11 +337,8 @@ Namespace net
         ''' <param name="IsHTML">正文是否为HTML格式。</param>
         Public Shared Sub SendMail(Receivers As String, CC As String, BCC As String, Subject As String, Body As String,
                                  IsHTML As Boolean)
-            Dim mail As MailMessage = GetNewMailMessage(Receivers, CC, BCC, Subject)
+            Dim mail As MailMessage = GetNewMailMessage(Receivers, CC, BCC, Subject, Body)
             mail.IsBodyHtml = IsHTML
-            If Body <> Nothing Then
-                mail.Body = Body
-            End If
             Dim smtpClt As SmtpClient = New SmtpClient(m_SmtpHost, m_SmtpPort)
             Dim password As String = String.Empty
             smtpClt.Credentials = New NetworkCredential(mail.From.Address, password)

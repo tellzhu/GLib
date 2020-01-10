@@ -97,7 +97,6 @@ Namespace image
             gpsLoc.UpdateImage(img)
             img.Save(NewFileName)
             img.Dispose()
-            img = Nothing
         End Sub
 
         Public ReadOnly Property GPSMetadata As GPSLocation

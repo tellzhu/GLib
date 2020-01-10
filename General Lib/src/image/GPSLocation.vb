@@ -17,7 +17,6 @@ Namespace image
             For i As Integer = 0 To cnt
                 img.SetPropertyItem(m_list.Item(i))
             Next
-            cnt = Nothing
         End Sub
 
         Protected Overrides Sub Finalize()

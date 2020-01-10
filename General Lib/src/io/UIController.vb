@@ -6,9 +6,9 @@ Namespace io
 
         Private Shared Sub ForbidToolStripMenuItem(ByRef menu As ToolStripMenuItem, Optional ByVal IsEnabled As Boolean = True)
             Dim cnt As Integer = menu.DropDownItems.Count
-            Dim subMenu As ToolStripMenuItem = Nothing
-            Dim ctrl As ToolStripItem = Nothing
-            Dim t As Type = Nothing
+            Dim subMenu As ToolStripMenuItem
+            Dim ctrl As ToolStripItem
+            Dim t As Type
             For i As Integer = 1 To cnt
                 ctrl = menu.DropDownItems(i - 1)
                 t = ctrl.GetType
@@ -20,15 +20,11 @@ Namespace io
                     End If
                 End If
             Next
-            ctrl = Nothing
-            t = Nothing
-            subMenu = Nothing
-            cnt = Nothing
         End Sub
 
         Private Shared Sub ForbidMenuStrip(ByRef menu As MenuStrip, Optional ByVal IsEnabled As Boolean = True)
             Dim cnt As Integer = menu.Items.Count
-            Dim subMenu As ToolStripMenuItem = Nothing
+            Dim subMenu As ToolStripMenuItem
             For i As Integer = 1 To cnt
                 subMenu = CType(menu.Items(i - 1), ToolStripMenuItem)
                 subMenu.Enabled = IsEnabled And Not ctrlNameSet.Contains(subMenu.Name)
@@ -36,13 +32,11 @@ Namespace io
                     ForbidToolStripMenuItem(subMenu, subMenu.Enabled)
                 End If
             Next
-            cnt = Nothing
-            subMenu = Nothing
         End Sub
 
         Private Shared Sub ForbidTabControl(ByRef tabCtrl As TabControl, Optional ByVal IsEnabled As Boolean = True)
             Dim cnt As Integer = tabCtrl.TabPages.Count
-            Dim tabPg As TabPage = Nothing
+            Dim tabPg As TabPage
             For i As Integer = 1 To cnt
                 tabPg = tabCtrl.TabPages.Item(i - 1)
                 tabPg.Enabled = IsEnabled And Not ctrlNameSet.Contains(tabPg.Name)
@@ -50,19 +44,15 @@ Namespace io
                     ForbidControl(CType(tabPg, Control), tabPg.Enabled)
                 End If
             Next
-            cnt = Nothing
-            tabPg = Nothing
         End Sub
 
         Private Shared Sub ForbidControl(ByRef ctrl As Control, Optional ByVal IsEnabled As Boolean = True)
             Dim cnt As Integer = ctrl.Controls.Count
-            Dim childControl As Control = Nothing
+            Dim childControl As Control
             For i As Integer = 1 To cnt
                 childControl = ctrl.Controls.Item(i - 1)
                 childControl.Enabled = IsEnabled And Not ctrlNameSet.Contains(childControl.Name)
             Next
-            cnt = Nothing
-            childControl = Nothing
         End Sub
 
         ''' <summary>
@@ -82,8 +72,8 @@ Namespace io
             End If
             ctrlNameSet = SubControlNames
             Dim cnt As Integer = ParentForm.Controls.Count
-            Dim m_ctrl As Control = Nothing
-            Dim t As Type = Nothing
+            Dim m_ctrl As Control
+            Dim t As Type
             For i As Integer = 1 To cnt
                 m_ctrl = ParentForm.Controls.Item(i - 1)
                 If ctrlNameSet.Contains(m_ctrl.Name) Then
@@ -99,9 +89,6 @@ Namespace io
                         ForbidControl(CType(m_ctrl, Control), m_ctrl.Enabled)
                 End Select
             Next
-            cnt = Nothing
-            m_ctrl = Nothing
-            t = Nothing
             ctrlNameSet.Clear()
             ctrlNameSet = Nothing
         End Sub
@@ -121,11 +108,8 @@ Namespace io
                     List.Items.RemoveAt(index)
                     List.Items.Insert(index - UpStep, s)
                     List.SelectedIndex = index - UpStep
-                    s = Nothing
                 End If
-                cnt = Nothing
             End If
-            index = Nothing
         End Sub
 
         ''' <summary>
@@ -145,9 +129,7 @@ Namespace io
                 ElseIf count > 0 Then
                     SourceListBox.SelectedIndex = count - 1
                 End If
-                count = Nothing
             End If
-            index = Nothing
         End Sub
 
     End Class

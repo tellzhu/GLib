@@ -97,7 +97,6 @@ Namespace db
                 ReDim m_StringLines(m_Index - 1)
                 Array.Copy(tempStr, m_StringLines, m_Index)
                 Array.Clear(tempStr, 0, m_Index)
-                tempStr = Nothing
             End If
             m_DataTableName = DataTableName
             LoadMemoryToDBTable(FileName)

@@ -124,8 +124,7 @@ Namespace finance
                     End If
                     yr += 1
                 End While
-                frac = frac / (yr - Date1.Year)
-                yr = Nothing
+                frac /= (yr - Date1.Year)
                 Return DateDiff(DateInterval.Day, Date1, Date2) / frac
             End If
         End Function
@@ -153,13 +152,9 @@ Namespace finance
                                  + IndexOfPeriod(MaturityDate, periodLength)
             Dim date1 As Date = DateInMonthIndex(monthIndex, Min(DaysInMonth(monthIndex), MaturityDate.Day))
             If SettlementDate < date1 Then
-                periodLength = Nothing
-                monthIndex = Nothing
                 Return date1
             Else
                 monthIndex += periodLength
-                periodLength = Nothing
-                date1 = Nothing
                 Return DateInMonthIndex(monthIndex, Min(DaysInMonth(monthIndex), MaturityDate.Day))
             End If
         End Function

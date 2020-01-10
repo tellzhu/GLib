@@ -116,7 +116,6 @@
                     ReDim dest(source.Length - 1)
                 ElseIf dest.Length <> source.Length Then
                     Array.Clear(dest, 0, dest.Length)
-                    dest = Nothing
                     ReDim dest(source.Length - 1)
                 End If
                 Array.Copy(source, dest, source.Length)

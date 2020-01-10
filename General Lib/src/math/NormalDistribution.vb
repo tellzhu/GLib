@@ -14,7 +14,7 @@ Namespace math
             Else
                 Dim count As Integer = 1
                 Dim seed As Double = 0.675
-                Dim cdf As Double = Nothing
+                Dim cdf As Double
                 Dim lowLimit As Double = 0
                 Dim highLimit As Double = 6
                 While count <= 100
@@ -31,10 +31,6 @@ Namespace math
                     End If
                     count += 1
                 End While
-                cdf = Nothing
-                count = Nothing
-                lowLimit = Nothing
-                highLimit = Nothing
                 Return seed
             End If
         End Function

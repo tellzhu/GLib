@@ -31,7 +31,6 @@
                 Next
                 Array.Clear(p, 0, p.Length)
             End If
-            p = Nothing
         End Sub
 
         ''' <summary>

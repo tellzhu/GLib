@@ -14,31 +14,22 @@ Namespace io
         ''' <returns>若找到指定名称的子节点，则返回该子节点在列表中的位置序号；否则返回-1。</returns>
         ''' <remarks>若存在同名的子节点，则返回最后一个子节点在列表中的位置序号。</remarks>
         Public Shared Function IndexOfChild(ByRef ChildrenList As XmlNodeList, ByVal ChildName As String, ByVal NumberOfChild As Integer) As Integer
-            Dim node As XmlNode = Nothing
+            Dim node As XmlNode
             Dim count As Integer = 0, position As Integer = -1
             Dim totalNumberOfChild As Integer = ChildrenList.Count
             For i As Integer = 1 To totalNumberOfChild
                 node = ChildrenList(i - 1)
                 If node.Name = ChildName Then
-                    count = count + 1
+                    count += 1
                     position = i - 1
                     If count > NumberOfChild Then
-                        totalNumberOfChild = Nothing
-                        count = Nothing
-                        position = Nothing
-                        node = Nothing
                         Return -1
                     End If
                 End If
             Next
-            node = Nothing
-            totalNumberOfChild = Nothing
             If count <> NumberOfChild Then
-                count = Nothing
-                position = Nothing
                 Return -1
             Else
-                count = Nothing
                 Return position
             End If
         End Function
@@ -52,9 +43,9 @@ Namespace io
         ''' <returns>若找到唯一一个指定名称的子节点和孙子节点，则返回该子节点在列表中的位置序号；否则返回-1。</returns>
         ''' <remarks></remarks>
         Public Shared Function IndexOfChild(ByRef ChildrenList As XmlNodeList, ByVal ChildName As String, ByVal GrandsonName As String) As Integer
-            Dim node1 As XmlNode = Nothing, node2 As XmlNode = Nothing
+            Dim node1 As XmlNode, node2 As XmlNode
             Dim count As Integer = 0, position As Integer = -1
-            Dim totalNumber1 As Integer = ChildrenList.Count, totalNumber2 As Integer = Nothing
+            Dim totalNumber1 As Integer = ChildrenList.Count, totalNumber2 As Integer
             For i As Integer = 1 To totalNumber1
                 node1 = ChildrenList(i - 1)
                 totalNumber2 = node1.ChildNodes.Count
@@ -62,31 +53,18 @@ Namespace io
                     node2 = node1.ChildNodes(j - 1)
                     If node2.Name = ChildName Then
                         If node2.ChildNodes.Count = 1 And node2.ChildNodes(0).Value = GrandsonName Then
-                            count = count + 1
+                            count += 1
                             position = i - 1
                             If count > 1 Then
-                                node1 = Nothing
-                                node2 = Nothing
-                                count = Nothing
-                                position = Nothing
-                                totalNumber1 = Nothing
-                                totalNumber2 = Nothing
                                 Return -1
                             End If
                         End If
                     End If
                 Next
             Next
-            node1 = Nothing
-            node2 = Nothing
-            totalNumber1 = Nothing
-            totalNumber2 = Nothing
             If count <> 1 Then
-                count = Nothing
-                position = Nothing
                 Return -1
             Else
-                count = Nothing
                 Return position
             End If
         End Function
@@ -102,8 +80,6 @@ Namespace io
 
             doc.AppendChild(node)
             doc.Save(fileName)
-            node = Nothing
-            doc = Nothing
         End Sub
 
         Private Shared Sub SaveNode(ByRef parentTree As Tree, ByRef parentNode As XmlNode)
@@ -133,15 +109,12 @@ Namespace io
             doc.Load(fileName)
 
             If doc.ChildNodes.Count <> 1 Then
-                doc = Nothing
                 Return Nothing
             End If
 
             Dim node As XmlNode = doc.ChildNodes(0)
             Dim t As Tree = New Tree(node.Name)
             LoadNode(t, node)
-            node = Nothing
-            doc = Nothing
             Return t
         End Function
 

@@ -8,8 +8,7 @@ Namespace text
             For i As Integer = 0 To len
                 s = s + CStr(values(i)) + SeparateChar
             Next
-            s = s + CStr(values(len + 1))
-            len = Nothing
+            s += CStr(values(len + 1))
             Return s
         End Function
 
@@ -75,8 +74,6 @@ Namespace text
             For i As Integer = 0 To Milestone.Length - 1
                 index = s.IndexOf(Milestone(i))
                 If index = -1 Then
-                    s = Nothing
-                    index = Nothing
                     Return Nothing
                 Else
                     s = s.Substring(index + Milestone(i).Length)
@@ -87,8 +84,6 @@ Namespace text
             Else
                 index = s.IndexOf(Terminal)
                 If index = -1 Then
-                    s = Nothing
-                    index = Nothing
                     Return Nothing
                 Else
                     Return s.Substring(0, index).Trim

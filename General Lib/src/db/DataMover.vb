@@ -64,7 +64,7 @@ Namespace db
                                         ByVal DBName As String, ByVal UserName As String,
                                         ByVal Password As String)
             m_SourceDbType = DatabaseType
-            Dim m_DataSourceString As String = Nothing
+            Dim m_DataSourceString As String
             Select Case DatabaseType
                 Case DBType.DB2
                     m_DataSourceString = "Server=" + IPAddress + ":50000;Database=" _
@@ -97,7 +97,6 @@ Namespace db
                     MsgBox("Error Source Database Type")
             End Select
             m_SourceDbConnection.Open()
-            m_DataSourceString = Nothing
             ConnectionIsReused = True
         End Sub
 
@@ -187,7 +186,6 @@ Namespace db
                 s += cols(i) + ","
             Next
             Array.Clear(cols, 0, cols.Length)
-            cols = Nothing
             Return s.Substring(0, s.Length - 1)
         End Function
 
@@ -205,31 +203,25 @@ Namespace db
                 m_DictionaryOfColumnType.Add(i, dict.Item(s(i)))
             Next
             Array.Clear(s, 0, s.Length)
-            s = Nothing
             dict.Clear()
-            dict = Nothing
-            columnsName = Nothing
         End Sub
 
         Private Shared Sub MoveDataDBFToSqlServer(SelectCommand As String)
             Dim adapter As OleDbDataAdapter = New OleDbDataAdapter(SelectCommand, CType(m_SourceDbConnection, OleDbConnection))
             Dim dt As Data.DataTable = New Data.DataTable
             adapter.Fill(dt)
-            adapter = Nothing
             BulkCopy(dt, m_TargetTableName)
             dt.Clear()
-            dt = Nothing
         End Sub
 
         Private Shared Sub MoveDataDBFExcelCSVToOracle(SelectCommand As String)
             Dim adapter As OleDbDataAdapter = New OleDbDataAdapter(SelectCommand, CType(m_SourceDbConnection, OleDbConnection))
             Dim dt As Data.DataTable = New Data.DataTable
             adapter.Fill(dt)
-            adapter = Nothing
             Dim maxColumn As Integer = dt.Columns.Count - 1
-            Dim str As String = Nothing
+            Dim str As String
             Dim maxRow As Integer = dt.Rows.Count - 1
-            Dim obj As Object = Nothing
+            Dim obj As Object
             For currRow As Integer = 0 To maxRow
                 str = m_InsertStatement
                 For currColumn As Integer = 0 To maxColumn
@@ -253,7 +245,7 @@ Namespace db
                             If IsDBNull(obj) Then
                                 str += "NULL"
                             Else
-                                str = str & CDec(obj)
+                                str &= CDec(obj)
                             End If
                         Case Else
                             MsgBox("Error Column Type.", MsgBoxStyle.Critical)
@@ -266,12 +258,7 @@ Namespace db
                 Next
                 Execute(str)
             Next
-            obj = Nothing
             dt.Clear()
-            dt = Nothing
-            maxColumn = Nothing
-            maxRow = Nothing
-            str = Nothing
         End Sub
 
         Private Shared Function IsCommentLine(line As String) As Boolean
@@ -350,7 +337,7 @@ Namespace db
             sLoader.DataTableName = m_TargetTableName
             Dim reader As DB2DataReader = CType(m_SourceDbCommand, DB2Command).ExecuteReader()
             Dim maxColumn As Integer = reader.FieldCount - 1
-            Dim str As String = Nothing
+            Dim str As String
             Do While reader.Read
                 str = ""
                 For i As Integer = 0 To maxColumn
@@ -371,10 +358,10 @@ Namespace db
                             If IsDBNull(reader.GetValue(i)) Then
                                 str += "0"
                             Else
-                                str = str & reader.GetDecimal(i)
+                                str &= reader.GetDecimal(i)
                             End If
                         Case "INT"
-                            str = str & CInt(reader.GetValue(i))
+                            str &= CInt(reader.GetValue(i))
                         Case Else
                             MsgBox("Error Column Type.", MsgBoxStyle.Critical)
                     End Select
@@ -385,11 +372,7 @@ Namespace db
                 sLoader.Append(str)
             Loop
             reader.Close()
-            reader = Nothing
             sLoader.Load(m_TargetTableName)
-            sLoader = Nothing
-            maxColumn = Nothing
-            str = Nothing
         End Sub
 
         Private Shared Sub MoveDataOracleToSqlServer(ByVal SelectCommand As String)
@@ -398,7 +381,7 @@ Namespace db
             sLoader.DataTableName = m_TargetTableName
             Dim reader As OracleDataReader = CType(m_SourceDbCommand, OracleCommand).ExecuteReader()
             Dim maxColumn As Integer = reader.FieldCount - 1
-            Dim str As String = Nothing
+            Dim str As String
             Do While reader.Read
                 str = ""
                 For i As Integer = 0 To maxColumn
@@ -411,11 +394,11 @@ Namespace db
                             Case "DATE"
                                 str += CStr(reader.GetDateTime(i))
                             Case "INT"
-                                str = str & CInt(reader.GetValue(i))
+                                str &= CInt(reader.GetValue(i))
                             Case "BIGINT"
-                                str = str & CLng(reader.GetValue(i))
+                                str &= CLng(reader.GetValue(i))
                             Case "DECIMAL"
-                                str = str & CDec(reader.GetValue(i))
+                                str &= CDec(reader.GetValue(i))
                             Case Else
                                 MsgBox("Error Column Type:" + m_DictionaryOfColumnType.Item(i), MsgBoxStyle.Critical)
                         End Select
@@ -427,11 +410,7 @@ Namespace db
                 sLoader.Append(str)
             Loop
             reader.Close()
-            reader = Nothing
             sLoader.Load(m_TargetTableName)
-            sLoader = Nothing
-            maxColumn = Nothing
-            str = Nothing
         End Sub
     End Class
 End Namespace

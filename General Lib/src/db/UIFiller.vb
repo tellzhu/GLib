@@ -17,7 +17,7 @@ Namespace db
         ''' <param name="Command">待运行的SQL查询语句。</param>
         ''' <remarks></remarks>
         Public Shared Sub FillDataGridView(ByRef DataGrid As DataGridView, ByVal Command As String)
-            Dim dbAdapter As DbDataAdapter = Nothing
+            Dim dbAdapter As DbDataAdapter
             Select Case MetaData.DatabaseType
                 Case MetaData.DBType.ODBC
                     dbAdapter = New OdbcDataAdapter(Command, MetaData.DataSource)
@@ -37,8 +37,6 @@ Namespace db
             DataGrid.DataSource = Nothing
             DataGrid.Columns.Clear()
             DataGrid.DataSource = dTable
-            dbAdapter = Nothing
-            dTable = Nothing
         End Sub
 
         ''' <summary>
@@ -59,7 +57,6 @@ Namespace db
                 Box.Items.Add(arr.Item(i - 1))
             Next
             arr.Clear()
-            arr = Nothing
             If Box.Items.Count > DefaultSelectedIndex And DefaultSelectedIndex >= 0 Then
                 Box.SelectedIndex = DefaultSelectedIndex
             ElseIf Box.Items.Count > 0 Then

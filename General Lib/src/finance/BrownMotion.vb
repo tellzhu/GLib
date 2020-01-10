@@ -33,7 +33,6 @@ Namespace finance
             For i As Integer = 0 To maxIndex
                 m_random(i) = m_cdf.NormSInv(m_randomSeed.NextDouble)
             Next
-            maxIndex = Nothing
         End Sub
 
         ''' <summary>
@@ -65,10 +64,10 @@ Namespace finance
             Dim const2 As Double = 1.0 / Sqrt(365.0)
             Dim coef1 As Double = m_Mu(0) - const1 * Pow(m_Sigma(0), 2)
             Dim coef2 As Double = const2 * m_Sigma(0)
-            Dim coef1Up As Double = Nothing
-            Dim coef2Up As Double = Nothing
-            Dim coef1Down As Double = Nothing
-            Dim coef2Down As Double = Nothing
+            Dim coef1Up As Double
+            Dim coef2Up As Double
+            Dim coef1Down As Double
+            Dim coef2Down As Double
             If m_BrownMotionParameter.IncludeShift Then
                 coef1Up = m_Mu(0) - const1 * Pow(m_SigmaUp(0), 2)
                 coef2Up = const2 * m_SigmaUp(0)
@@ -89,7 +88,7 @@ Namespace finance
                 priceOdd(k) = spot * Exp(coef1 + coef2 * m_random(3 * k))
                 priceUpOdd(k) = spotUp * Exp(coef1Up + coef2Up * m_random(3 * k + 1))
                 priceDownOdd(k) = spotDown * Exp(coef1Down + coef2Down * m_random(3 * k + 2))
-                sLoader.Append(s & k + 1 & "," & Round(priceOdd(k), m_RoundDigits) & _
+                sLoader.Append(s & k + 1 & "," & Round(priceOdd(k), m_RoundDigits) &
                                "," & Round(priceUpOdd(k), m_RoundDigits) _
                                & "," & Round(priceDownOdd(k), m_RoundDigits))
             Next
@@ -118,7 +117,7 @@ Namespace finance
                         priceEven(k) = priceOdd(k) * Exp(coef1 + coef2 * m_random(3 * k))
                         priceUpEven(k) = priceUpOdd(k) * Exp(coef1Up + coef2Up * m_random(3 * k + 1))
                         priceDownEven(k) = priceDownOdd(k) * Exp(coef1Down + coef2Down * m_random(3 * k + 2))
-                        sLoader.Append(s & k + 1 & "," & Round(priceEven(k), m_RoundDigits) & _
+                        sLoader.Append(s & k + 1 & "," & Round(priceEven(k), m_RoundDigits) &
                                        "," & Round(priceUpEven(k), m_RoundDigits) _
                                        & "," & Round(priceDownEven(k), m_RoundDigits))
                     Next
@@ -127,54 +126,26 @@ Namespace finance
                         priceOdd(k) = priceEven(k) * Exp(coef1 + coef2 * m_random(3 * k))
                         priceUpOdd(k) = priceUpEven(k) * Exp(coef1Up + coef2Up * m_random(3 * k + 1))
                         priceDownOdd(k) = priceDownEven(k) * Exp(coef1Down + coef2Down * m_random(3 * k + 2))
-                        sLoader.Append(s & k + 1 & "," & Round(priceOdd(k), m_RoundDigits) & _
+                        sLoader.Append(s & k + 1 & "," & Round(priceOdd(k), m_RoundDigits) &
                                        "," & Round(priceUpOdd(k), m_RoundDigits) _
                                        & "," & Round(priceDownOdd(k), m_RoundDigits))
                     Next
                 End If
             Next
 
-            firstDate = Nothing
-            s = Nothing
-            spot = Nothing
-            spotUp = Nothing
-            spotDown = Nothing
-            m_PredictedLength = Nothing
-
             Array.Clear(priceOdd, 0, priceOdd.Length)
-            priceOdd = Nothing
             Array.Clear(priceUpOdd, 0, priceUpOdd.Length)
-            priceUpOdd = Nothing
             Array.Clear(priceDownOdd, 0, priceDownOdd.Length)
-            priceDownOdd = Nothing
             Array.Clear(priceEven, 0, priceEven.Length)
-            priceEven = Nothing
             Array.Clear(priceUpEven, 0, priceUpEven.Length)
-            priceUpEven = Nothing
             Array.Clear(priceDownEven, 0, priceDownEven.Length)
-            priceDownEven = Nothing
 
             Array.Clear(m_Mu, 0, m_Mu.Length)
-            m_Mu = Nothing
             Array.Clear(m_Sigma, 0, m_Sigma.Length)
-            m_Sigma = Nothing
             Array.Clear(m_SigmaUp, 0, m_SigmaUp.Length)
-            m_SigmaUp = Nothing
             Array.Clear(m_SigmaDown, 0, m_SigmaDown.Length)
-            m_SigmaDown = Nothing
-
-            const1 = Nothing
-            const2 = Nothing
-            coef1 = Nothing
-            coef2 = Nothing
-            coef1Up = Nothing
-            coef2Up = Nothing
-            coef1Down = Nothing
-            coef2Down = Nothing
-            m_BrownMotionParameter = Nothing
 
             sLoader.Load(m_DBTable)
-            sLoader = Nothing
         End Sub
 
         Private m_TargetId As Integer = Nothing

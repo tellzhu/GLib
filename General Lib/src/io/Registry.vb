@@ -51,15 +51,12 @@ Namespace io
 				sonKey = parentKey.OpenSubKey(strs(i))
 				LoadKey(parentTree.Add(strs(i)), sonKey)
 				sonKey.Close()
-				sonKey = Nothing
 			Next
-			strs = Nothing
 
 			strs = parentKey.GetValueNames()
 			For i As Integer = 0 To strs.Length - 1
 				parentTree.Keys(strs(i)) = CStr(parentKey.GetValue(strs(i)))
 			Next
-			strs = Nothing
 		End Sub
 
 	End Class

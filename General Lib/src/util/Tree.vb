@@ -37,13 +37,11 @@ Namespace util
                 For i As Integer = 0 To children.Count - 1
                     t = CType(children(i), Tree)
                     If t.Name = name Then
-                        t = Nothing
-                        Return i
-                    End If
+						Return i
+					End If
                 Next
-                t = Nothing
-                Return -1
-            End If
+				Return -1
+			End If
         End Function
 
         Public Sub Rename(ByVal name As String)
@@ -111,7 +109,6 @@ Namespace util
 							If t.ChildCount = 1 Then
 								t.Child(0).data = value
 							End If
-							t = Nothing
 						Else
 							Add(key)
 							Child(ChildCount - 1).Add(value)
@@ -133,7 +130,7 @@ Namespace util
 				Dim i As Integer = 1
 				Do While Not IsNothing(t.parent)
 					t = t.parent
-					i = i + 1
+					i += 1
 				Loop
 				Return i
 			End Get

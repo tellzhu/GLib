@@ -14,11 +14,104 @@ Namespace office
         ''' <param name="a">指定的单元格。</param>
         ''' <param name="comment">注释的文本内容。</param>
         ''' <remarks></remarks>
-		Public Shared Sub setComment(ByRef a As Area, ByVal comment As String)
-			a.setComment(comment)
-		End Sub
+        Public Shared Sub setComment(ByRef a As Area, ByVal comment As String)
+            a.setComment(comment)
+        End Sub
 
-		Public Shared Sub setFontUnderline(ByRef a As Area, Optional ByVal isUnderline As Boolean = True)
+        ''' <summary>
+        ''' 在Excel工作表的指定单元格区域中输出SQL查询语句的结果集数据。输出到Excel的单元格
+        ''' 区域与结果集的数据是一一对应的，即：输出单元格的区域的行数、列数分别等于结果集的行数、
+        ''' 列数。
+        ''' </summary>
+        ''' <param name="SheetName">指定的Excel工作表。</param>
+        ''' <param name="Address">单元格地址。</param>
+        ''' <param name="SQL">待执行的SQL查询语句。</param>
+        ''' <returns>查询结果集的数据行数。</returns>
+        Public Shared Function PrintSQLQuery(SheetName As String, Address As String, SQL As String) As Integer
+            Return PrintSQLQueryInMemory(SheetName, Address, SQL)
+        End Function
+
+        Public Shared Function ContainsData(Of T)(KeyColumnName As String, Value As T) As Boolean
+            If m_PrintedDataTable Is Nothing Then
+                Return False
+            End If
+            For Each dt As Data.DataTable In m_PrintedDataTable.Values
+                If db.DBExpert.ContainsData(Of T)(dt, KeyColumnName, Value) Then
+                    Return True
+                End If
+            Next
+            Return False
+        End Function
+
+        Public Shared Sub PrintSQLQueries(Of T)(KeyColumnName As String, ByRef FilterSet As HashSet(Of T))
+            Dim dt As Data.DataTable
+            Dim index As Integer
+            For Each s As String In m_PrintedDataTable.Keys
+                index = s.IndexOf("!")
+                OpenSheet(s.Substring(0, index))
+                dt = Filter(Of T)(m_PrintedDataTable(s), KeyColumnName, FilterSet)
+                If dt IsNot Nothing Then
+                    PrintDataTableToExcel(Cell(s.Substring(index + 1)), dt)
+                    dt.Clear()
+                End If
+            Next
+        End Sub
+
+        Public Shared Sub PrintSQLQueries(Of T)(KeyColumnName As String, ByRef FilterList As List(Of T))
+            Dim fSet As HashSet(Of T) = ConvertListToSet(Of T)(FilterList)
+            PrintSQLQueries(Of T)(KeyColumnName, fSet)
+            fSet.Clear()
+        End Sub
+
+        Private Shared Function PrintSQLQueryInMemory(SheetName As String, Address As String, SQL As String) As Integer
+            Dim dt As Data.DataTable = GetDataTable(SQL)
+            Dim rowCount As Integer = dt.Rows.Count
+            OpenSheet(SheetName)
+            Dim a As Area = Cell(Address)
+            If a IsNot Nothing Then
+                PrintDataTableToExcel(a, dt)
+            End If
+            If m_PrintedDataTable IsNot Nothing Then
+                If Not m_PrintedDataTable.ContainsKey(SheetName + "!" + Address) Then
+                    m_PrintedDataTable.Add(SheetName + "!" + Address, dt)
+                End If
+            End If
+            Return rowCount
+        End Function
+
+        Private Shared m_PrintedDataTable As Dictionary(Of String, Data.DataTable) = Nothing
+
+        Private Shared Sub ClearPrintedDataTable()
+            If m_PrintedDataTable IsNot Nothing Then
+                If m_PrintedDataTable.Count > 0 Then
+                    For Each dt As Data.DataTable In m_PrintedDataTable.Values
+                        dt.Clear()
+                    Next
+                    m_PrintedDataTable.Clear()
+                End If
+            End If
+        End Sub
+
+        ''' <summary>
+        ''' 启动Excel打印机。
+        ''' </summary>
+        Public Shared Sub StartExcelPrinter()
+            If m_PrintedDataTable Is Nothing Then
+                m_PrintedDataTable = New Dictionary(Of String, Data.DataTable)
+            Else
+                ClearPrintedDataTable()
+            End If
+        End Sub
+
+        ''' <summary>
+        ''' 停止Excel打印机。
+        ''' </summary>
+        Public Shared Sub StopExcelPrinter()
+            ClearPrintedDataTable()
+            m_PrintedDataTable = Nothing
+        End Sub
+
+        Public Shared Sub setFontUnderline(ByRef a As Area, Optional ByVal isUnderline As Boolean = True)
 			a.setFontUnderline(isUnderline)
 		End Sub
 
@@ -71,9 +164,6 @@ Namespace office
                 setFormat(Cell(Base(baseRow, baseColumn + cf.ColumnNo(i) - 1), rowCnt - 1, 0), cf.ColumnFormat(i))
             Next
             PrintRecordSet(Cell(baseRow, baseColumn))
-            maxNo = Nothing
-            baseRow = Nothing
-            baseColumn = Nothing
             Return rowCnt
         End Function
 
@@ -233,23 +323,6 @@ Namespace office
             setFormula(a, Divide(Address(a.Row, numeratorColumn), Address(a.Row, denominatorColumn)))
         End Sub
 
-        Public Shared Function PrintDataTableToHTML(ByRef dt As Data.DataTable) As String
-            Dim m_HtmlStr As String = Nothing
-            Dim rowCount As Integer = dt.Rows.Count
-            If rowCount > 0 Then
-                Dim columnCount As Integer = dt.Columns.Count
-                For i As Integer = 0 To rowCount - 1
-                    For j As Integer = 0 To columnCount - 1
-                        m_HtmlStr = m_HtmlStr + "<td align=""center"">" + CStr(dt.Rows(i).ItemArray(j)) + "</td>"
-                    Next
-                    m_HtmlStr = m_HtmlStr + "</tr>"
-                Next
-                columnCount = Nothing
-            End If
-            rowCount = Nothing
-            Return m_HtmlStr
-        End Function
-
         ''' <summary>
         ''' 在Excel工作表的指定单元格区域中输出一个数据矩阵中的所有元素。输出到Excel的单元格
         ''' 区域与矩阵的元素是一一对应的，即：输出单元格的区域的行数、列数分别等于矩阵的行数、
@@ -276,133 +349,7 @@ Namespace office
             Dim row As Integer = mt.RowsCount
             PrintMatrix(a, mt)
             mt.Clear()
-            mt = Nothing
             Return row
-        End Function
-
-        Private Shared m_PrintInGroupName As String = Nothing
-        Private Shared m_GroupNameTable As Dictionary(Of String, List(Of Data.DataTable)) = Nothing
-        Public Shared Property PrintInGroupName As String
-            Get
-                Return m_PrintInGroupName
-            End Get
-            Set(value As String)
-                ClearGroupNameTable()
-                m_PrintInGroupName = value
-                m_GroupNameTable = New Dictionary(Of String, List(Of Data.DataTable))
-            End Set
-        End Property
-
-        Private Shared Sub ClearGroupNameTable()
-            If m_GroupNameTable IsNot Nothing Then
-                If m_GroupNameTable.Count > 0 Then
-                    Dim cnt As Integer = Nothing
-                    For Each lst As List(Of Data.DataTable) In m_GroupNameTable.Values
-                        If lst IsNot Nothing Then
-                            cnt = lst.Count
-                            If cnt > 0 Then
-                                For i As Integer = 0 To cnt - 1
-                                    lst.Item(i).Clear()
-                                    lst.Item(i) = Nothing
-                                Next
-                                lst.Clear()
-                            End If
-                            lst = Nothing
-                        End If
-                    Next
-                    m_GroupNameTable.Clear()
-                    cnt = Nothing
-                End If
-                m_GroupNameTable = Nothing
-            End If
-        End Sub
-
-        Public Shared Function GroupValues() As List(Of String)
-            If m_GroupNameTable Is Nothing Then
-                Return Nothing
-            End If
-            If m_GroupNameTable.Count = 0 Then
-                Return Nothing
-            End If
-            Dim lst As List(Of String) = New List(Of String)
-            For Each s As String In m_GroupNameTable.Keys
-                lst.Add(s)
-            Next
-            Return lst
-        End Function
-
-        Private Shared Sub FillGroupNameTable(ByRef dt As Data.DataTable)
-            Dim index As Integer = dt.Columns.IndexOf(m_PrintInGroupName)
-            If index <> -1 Then
-                Dim subDts As Dictionary(Of String, Data.DataTable) = Split(dt, index)
-                Dim lst As List(Of Data.DataTable) = Nothing
-                If m_GroupNameTable.Count = 0 Then
-                    For Each s As String In subDts.Keys
-                        lst = New List(Of Data.DataTable)
-                        lst.Add(subDts(s).Copy)
-                        m_GroupNameTable.Add(s, lst)
-                    Next
-                    lst = Nothing
-                Else
-                    Dim length As Integer = -1
-                    For Each s As String In m_GroupNameTable.Keys
-                        If length = -1 Then
-                            length = m_GroupNameTable(s).Count
-                        End If
-                        If subDts.ContainsKey(s) Then
-                            m_GroupNameTable(s).Add(subDts(s).Copy)
-                        Else
-                            m_GroupNameTable(s).Add(New Data.DataTable())
-                        End If
-                    Next
-                    For Each s As String In subDts.Keys
-                        If Not m_GroupNameTable.ContainsKey(s) Then
-                            lst = New List(Of Data.DataTable)
-                            For i As Integer = 1 To length
-                                lst.Add(New Data.DataTable)
-                            Next
-                            lst.Add(subDts(s).Copy)
-                            m_GroupNameTable.Add(s, lst)
-                        End If
-                    Next
-                    lst = Nothing
-                    length = Nothing
-                End If
-                For Each dt1 As Data.DataTable In subDts.Values
-                    dt1.Clear()
-                    dt1 = Nothing
-                Next
-                subDts.Clear()
-                subDts = Nothing
-            End If
-            index = Nothing
-        End Sub
-
-        Public Shared Function PrintGroupValue(ByRef a As Area, GroupValue As String, Index As Integer) As Integer
-            If m_GroupNameTable Is Nothing Then
-                Return 0
-            End If
-            If Not m_GroupNameTable.ContainsKey(GroupValue) Then
-                Return 0
-            End If
-            Dim lst As List(Of Data.DataTable) = m_GroupNameTable(GroupValue)
-            If lst Is Nothing Then
-                Return 0
-            End If
-            If lst.Count < Index Or Index < 1 Then
-                Return 0
-            End If
-            Dim dt As Data.DataTable = lst(Index - 1)
-            If dt Is Nothing Then
-                Return 0
-            End If
-            PrintDataTableToExcel(a, dt)
-            Return dt.Rows.Count
-        End Function
-        Public Shared Function PrintGroupValue(GroupValue As String) As String
-            Dim lst As List(Of Data.DataTable) = m_GroupNameTable(GroupValue)
-            Dim dt As Data.DataTable = lst(0)
-            Return PrintDataTableToHTML(dt)
         End Function
 
         ''' <summary>
@@ -419,11 +366,7 @@ Namespace office
             If a IsNot Nothing Then
                 PrintDataTableToExcel(a, dt)
             End If
-            If m_PrintInGroupName IsNot Nothing Then
-                FillGroupNameTable(dt)
-            End If
             dt.Clear()
-            dt = Nothing
             Return rowCount
         End Function
 
@@ -440,11 +383,8 @@ Namespace office
                 If rawData IsNot Nothing Then
                     Cell(Base(a.Row, a.Column), rowCount - 1, columnCount - 1).setValueArray(rawData)
                     Array.Clear(rawData, 0, rawData.Length)
-                    rawData = Nothing
                 End If
-                columnCount = Nothing
             End If
-            rowCount = Nothing
         End Sub
 
         ''' <summary>
@@ -465,11 +405,6 @@ Namespace office
                 setFormat(Cell(Base(baseRow, baseColumn + cf.ColumnNo(i) - 1), rowCnt - 1, 0), cf.ColumnFormat(i))
             Next
             PrintMatrix(Cell(baseRow, baseColumn), mt, 1, 1, rowCnt, columnCnt)
-            maxNo = Nothing
-            baseRow = Nothing
-            baseColumn = Nothing
-            rowCnt = Nothing
-            columnCnt = Nothing
         End Sub
 
         ''' <summary>
@@ -499,8 +434,6 @@ Namespace office
                     Cell(row + i - 1, column + j - 1).setValue(mt.Cell(i + topRow - 1, j + leftColumn - 1))
                 Next
             Next
-            row = Nothing
-            column = Nothing
         End Sub
 
         Public Shared Sub PrintTriangle(ByRef a As Area, ByRef t As Triangle(Of Object))
@@ -511,20 +444,16 @@ Namespace office
                     Cell(row + i - 1, column + j - 1).setValue(t.Cell(i, j))
                 Next
             Next
-            row = Nothing
-            column = Nothing
         End Sub
 
         Public Shared Sub PrintDerivativeTriangle(ByRef a As Area, ByVal row As Integer, ByVal column As Integer, ByVal length As Integer)
             Dim srcRow As Integer = a.Row, srcColumn As Integer = a.Column
             For i As Integer = 1 To length - 1
                 For j As Integer = 1 To length - i
-                    Cell(row + i - 1, column + j - 1).setFormula( _
+                    Cell(row + i - 1, column + j - 1).setFormula(
                     Divide(Address(srcRow + i - 1, srcColumn + j), Address(srcRow + i - 1, srcColumn + j - 1)))
                 Next
             Next
-            srcRow = Nothing
-            srcColumn = Nothing
         End Sub
 
         Enum BorderType As Integer
@@ -617,7 +546,6 @@ Namespace office
         Public Shared Sub ReplaceText(ByRef a As Area, oldValue As String, newValue As String)
             Dim s As String = a.ValueAsString
             a.setValue(s.Replace(oldValue, newValue), 0, 0)
-            s = Nothing
         End Sub
 
         ''' <summary>
