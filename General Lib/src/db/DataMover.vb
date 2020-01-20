@@ -169,7 +169,7 @@ Namespace db
                 MoveDataDBFExcelCSVToOracle(SelectCommand)
             ElseIf m_SourceDbType = DBType.TEXT And DatabaseType = DBType.SQLSERVER Then
                 MoveDataTextToSqlServer(SelectCommand)
-            ElseIf m_SourceDbType = DBType.DBF And DatabaseType = DBType.SQLSERVER Then
+            ElseIf (m_SourceDbType = DBType.DBF Or m_SourceDbType = DBType.EXCEL) And DatabaseType = DBType.SQLSERVER Then
                 MoveDataDBFToSqlServer(SelectCommand)
             Else
                 MsgBox("Error Move Data Type", MsgBoxStyle.Critical)
