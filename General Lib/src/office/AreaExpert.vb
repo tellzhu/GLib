@@ -26,9 +26,10 @@ Namespace office
         ''' <param name="SheetName">指定的Excel工作表。</param>
         ''' <param name="Address">单元格地址。</param>
         ''' <param name="SQL">待执行的SQL查询语句。</param>
+        ''' <param name="IsOnlyMemory">SQL查询结果集仅打印到内存或是同时打印到Excel工作表。</param>
         ''' <returns>查询结果集的数据行数。</returns>
-        Public Shared Function PrintSQLQuery(SheetName As String, Address As String, SQL As String) As Integer
-            Return PrintSQLQueryInMemory(SheetName, Address, SQL)
+        Public Shared Function PrintSQLQuery(SheetName As String, Address As String, SQL As String, Optional IsOnlyMemory As Boolean = False) As Integer
+            Return PrintSQLQueryInMemory(SheetName, Address, SQL, IsOnlyMemory)
         End Function
 
         Public Shared Function ContainsData(Of T)(KeyColumnName As String, Value As T) As Boolean
@@ -57,19 +58,38 @@ Namespace office
             Next
         End Sub
 
+        ''' <summary>
+        ''' 将已打印至内存中的数据输出至Excel文件。
+        ''' </summary>
+        Public Shared Sub FlushExcelPrinter()
+            Dim dt As Data.DataTable
+            Dim index As Integer
+            For Each s As String In m_PrintedDataTable.Keys
+                index = s.IndexOf("!")
+                OpenSheet(s.Substring(0, index))
+                dt = m_PrintedDataTable(s).Copy
+                If dt IsNot Nothing Then
+                    PrintDataTableToExcel(Cell(s.Substring(index + 1)), dt)
+                    dt.Clear()
+                End If
+            Next
+        End Sub
+
         Public Shared Sub PrintSQLQueries(Of T)(KeyColumnName As String, ByRef FilterList As List(Of T))
             Dim fSet As HashSet(Of T) = ConvertListToSet(Of T)(FilterList)
             PrintSQLQueries(Of T)(KeyColumnName, fSet)
             fSet.Clear()
         End Sub
 
-        Private Shared Function PrintSQLQueryInMemory(SheetName As String, Address As String, SQL As String) As Integer
+        Private Shared Function PrintSQLQueryInMemory(SheetName As String, Address As String, SQL As String, IsOnlyMemory As Boolean) As Integer
             Dim dt As Data.DataTable = GetDataTable(SQL)
             Dim rowCount As Integer = dt.Rows.Count
-            OpenSheet(SheetName)
-            Dim a As Area = Cell(Address)
-            If a IsNot Nothing Then
-                PrintDataTableToExcel(a, dt)
+            If Not IsOnlyMemory Then
+                OpenSheet(SheetName)
+                Dim a As Area = Cell(Address)
+                If a IsNot Nothing Then
+                    PrintDataTableToExcel(a, dt)
+                End If
             End If
             If m_PrintedDataTable IsNot Nothing Then
                 If Not m_PrintedDataTable.ContainsKey(SheetName + "!" + Address) Then

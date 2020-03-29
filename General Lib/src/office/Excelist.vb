@@ -19,20 +19,28 @@ Namespace office
         Private Shared pnt As Point = Nothing
 
         Private Shared m_FileIsCreatedByCode As Boolean = Nothing
-        Private Shared m_FilePath_NPOI As String = Nothing
 
         ''' <summary>
         ''' 设置Excel应用程序对应的工作目录。
         ''' </summary>
         ''' <value></value>
         ''' <remarks></remarks>
-        Public Shared WriteOnly Property FilePath() As String
+        Private Shared WriteOnly Property FilePath() As String
             Set(ByVal path As String)
                 If currentApp IsNot Nothing Then
                     currentApp.DefaultFilePath = path
                 End If
             End Set
         End Property
+
+        ''' <summary>
+        ''' 在后台启动一个Excel应用程序进程，并设置其工作目录。
+        ''' </summary>
+        ''' <param name="FilePath">指定的Excel工作目录。</param>
+        Public Shared Sub StartApplication(FilePath As String)
+            StartApplication()
+            Excelist.FilePath = FilePath
+        End Sub
 
         ''' <summary>
         ''' 获得当前打开的Excel文件所在的Excel应用程序进程句柄。
@@ -86,7 +94,7 @@ Namespace office
         ''' 在后台启动一个Excel应用程序进程。
         ''' </summary>
         ''' <remarks></remarks>
-        Public Shared Sub StartApplication()
+        Private Shared Sub StartApplication()
             currentApp = New Application
             m_currentAppHandle = currentApp.Hwnd
             setScreenDisplay(False)
