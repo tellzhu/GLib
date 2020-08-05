@@ -76,6 +76,9 @@ Namespace office
         End Sub
 
         Public Shared Sub PrintSQLQueries(Of T)(KeyColumnName As String, ByRef FilterList As List(Of T))
+            If FilterList Is Nothing Then
+                Return
+            End If
             Dim fSet As HashSet(Of T) = ConvertListToSet(Of T)(FilterList)
             PrintSQLQueries(Of T)(KeyColumnName, fSet)
             fSet.Clear()
