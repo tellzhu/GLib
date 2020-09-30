@@ -45,6 +45,16 @@ Namespace db
                 End If
             End Function
 
+            Friend Function Execute(CommandText As String, ByRef KeyValuePair As Dictionary(Of String, Object)) As Integer
+                Me.DBMSCommand.CommandText = CommandText
+                For Each s As String In KeyValuePair.Keys
+                    Me.DBMSCommand.Parameters.Add(New SqlParameter(s, KeyValuePair(s)))
+                Next
+                Dim retVal As Integer = Me.DBMSCommand.ExecuteNonQuery()
+                Me.DBMSCommand.Parameters.Clear()
+                Return retVal
+            End Function
+
             Friend Function ExecuteType(Of T)(Command As String) As List(Of T)
                 Me.DBMSCommand.CommandText = Command
                 Dim reader As DbDataReader = Me.DBMSCommand.ExecuteReader
@@ -71,8 +81,8 @@ Namespace db
             End Function
         End Structure
 
-        Private Shared m_ConnectionSet As Dictionary(Of Integer, GeneralConnection) = New Dictionary(Of Integer, GeneralConnection)
-        Private Shared m_FieldCountSet As Dictionary(Of Integer, Integer) = New Dictionary(Of Integer, Integer)
+        Private Shared ReadOnly m_ConnectionSet As Dictionary(Of Integer, GeneralConnection) = New Dictionary(Of Integer, GeneralConnection)
+        Private Shared ReadOnly m_FieldCountSet As Dictionary(Of Integer, Integer) = New Dictionary(Of Integer, Integer)
 
         Friend Shared Sub CloseCurrentConnections()
             If m_ConnectionSet.Count > 0 Then
@@ -433,8 +443,9 @@ where type='P' and t2.name+'.'+t1.name='" + ProcName + "'") > 0 Then
         End Property
 
         Friend Shared Sub BulkCopy(ByRef sourceTable As Data.DataTable, destinationTable As String)
-            Dim bulkCopy As SqlBulkCopy = New SqlBulkCopy(DataSource)
-            bulkCopy.DestinationTableName = destinationTable
+            Dim bulkCopy As SqlBulkCopy = New SqlBulkCopy(DataSource) With {
+                .DestinationTableName = destinationTable
+            }
             bulkCopy.WriteToServer(sourceTable)
             bulkCopy.Close()
         End Sub
@@ -462,6 +473,19 @@ where type='P' and t2.name+'.'+t1.name='" + ProcName + "'") > 0 Then
             InitDBConnection()
             Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
             Return con.Execute(Command)
+        End Function
+
+        ''' <summary>
+        ''' 运行一个包含参数的SQL查询语句。
+        ''' </summary>
+        ''' <param name="CommandText">待运行的SQL语句。</param>
+        ''' <param name="KeyValuePair">需代入SQL语句以将参数实例化的“键-值”对。</param>
+        ''' <returns>SQL语句影响的结果集数量。</returns>
+        Public Shared Function Execute(ByVal CommandText As String, ByRef KeyValuePair As Dictionary(Of String, Object)) As Integer
+            Dim tId As Integer = CurrentThread.ManagedThreadId
+            InitDBConnection()
+            Dim con As GeneralConnection = m_ConnectionSet.Item(tId)
+            Return con.Execute(CommandText, KeyValuePair)
         End Function
 
         Private Shared Function GetDataAdapter(Command As String, ByRef con As GeneralConnection) As DbDataAdapter
